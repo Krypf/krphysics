@@ -5,7 +5,10 @@ from utils.result import print_md, print_latex
 class EuclideanSpace:
     def __init__(self, dimension: int):
         self.dimension = dimension
-
+        # Create Point(0, 0, ..., 0) using generator expression
+        # https://chatgpt.com/share/66f30ee0-9064-800e-a4c1-17ebcc4ed730
+        self.origin = Point(*(0 for _ in range(dimension))) 
+        
     def coefficient_symbols(self, _symbol: str = 'x'):
         x = _symbol + '1:' + str(self.dimension + 1)
         return sp.symbols(x)
@@ -26,8 +29,32 @@ def right_line(point_1, point_2):
     return Line(point_1, point_2)
 
 class Place(EuclideanSpace):
-    def __init__(self, position):
+    def __init__(self, dimension, position=None):
+        super().__init__(dimension) # Inherit dimensions and origin from EuclideanSpace
         self.position = position
+        
+    def coefficients_motion(self, function_name: str = "x", args = sp.Symbol("t")):
+        from sympy import Function, Matrix
+        d = self.dimension
+        # Check if args is a string
+        if isinstance(args, str):
+            args = sp.Symbol(args)
+        return Matrix([Function(f"{function_name}_{i}")(args) for i in range(1, d + 1)])
+    
+    def moving_frame(self, function_name: str = "e", args = sp.Symbol("t")):
+        from sympy import Function, Matrix
+        d = self.dimension
+        # Check if args is a string
+        if isinstance(args, str):
+            args = sp.Symbol(args)
+        return Matrix([[Function(f"{function_name}_{i}")(args) for i in range(1, d + 1)]])
+    
+    def fictitious_force(self, args = sp.Symbol("t")):
+        x = self.coefficients_motion()
+        e = self.moving_frame()
+        position_vector = (e * x)[0, 0]
+        return position_vector.diff(args, 2)
+        
 
 class PhysicalQuantity:
     def __init__(self,
