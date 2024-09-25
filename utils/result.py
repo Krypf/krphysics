@@ -12,7 +12,6 @@ def print_md(_string):
 def print_latex(latex_string, script_name='script.py'):
     # Prepare the string to append
     latex_string = f"${latex_string}$\n"
-    
     # Append to result.md (create the file if it doesn't exist)
     with open('result.md', 'a') as file:
         file.write(f"\n*Executed from: {script_name}*\n")
