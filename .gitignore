@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 [0-9][0-9].py
+[0-9][0-9].jl
 *.env
 *.env.*
 data/
