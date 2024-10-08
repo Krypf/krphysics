@@ -74,10 +74,10 @@ function parse_to_set_of_sets(vectors::Vector{Vector{Int64}})
 end
 
 # Example usage
-function test()
+function topology_test()
     # X = Set([1, 2])
-    # X = Set([1, 2, 3])
-    X = Set([1, 2, 3, 4])
+    X = Set([1, 2, 3])
+    # X = Set([1, 2, 3, 4])
     T = Set([Set([]), Set([1]), Set([2]), Set([1, 2]), X])
 
     top = Topology(X, T)
@@ -86,7 +86,7 @@ function test()
     p = powerset(collect(X))
     for t in powerset(collect(p))
         t = parse_to_set_of_sets(t)
-        top = Topology(X,t)
+        top = Topology(X, t)
         if is_topology((top))
             println(t)
         else
@@ -99,6 +99,6 @@ if abspath(PROGRAM_FILE) == abspath(@__FILE__)
     #Test code
     using .TopologyModule
     using Combinatorics
-    @time test()
+    @time topology_test()
 end
 
