@@ -1,15 +1,16 @@
 #%%
+# https://observablehq.com/@meetamit/fibonacci-lattices
 using Plots
 theme(:juno)
-
-function fibonacci_lattice(n::Int)
-    golden_ratio = (1 + sqrt(5)) / 2
-    p = golden_ratio - 1 # equals 1 /golden_ratio    
+function fibonacci_lattice(n::Int, ratio::Float64)
     q = n - 1
+    x(i) = modf(i * ratio)[1] # not i / p
+    y(i) = i / q
     # modf returns (frac, int)
-    fibonacci_lattice = [(modf(i / p)[1], i / q) for i in range(0, length=n)]
+    fibonacci_lattice = [(x(i), y(i)) for i in range(0, length=n)]
     return fibonacci_lattice
 end
+#%%
 function square_to_disk(point::Tuple{Float64, Float64})
     x, y = point
     theta, r = 2pi * x, sqrt(y)
@@ -26,12 +27,14 @@ function main()
     # Create a gradient colormap with n colors
     colors = cgrad(:rainbow, n)
     # Create a grid of points
-    lattice = fibonacci_lattice(n)
+    golden_ratio = (1 + sqrt(5)) / 2
+    phi_inverse = golden_ratio - 1 # equals 1 /golden_ratio    
+    lattice = fibonacci_lattice(n, phi_inverse)
     # println(lattice)
     plot = scatter(lattice, label="Grid Points", aspect_ratio=:equal, color=colors[1:n])
     # Save the plot to a file (optional)
     savefig(plot, "julia/fibonacci_lattice.png")  # Saves the plot as a PNG file
-
+    
     lattice_disk = square_to_disk.(lattice)
     plot = scatter(lattice_disk, label="Grid Points", aspect_ratio=:equal, color=colors[1:n])
     savefig(plot, "julia/fibonacci_disk.png")  # Saves the plot as a PNG file
