@@ -1,6 +1,3 @@
-# import os
-from sympy import latex
-# from typing import Dict
 # https://chatgpt.com/c/672b9133-9d20-800e-894f-bd0889252edf
 
 import os
