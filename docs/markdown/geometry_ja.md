@@ -23,15 +23,15 @@ $N$: $n$ 次元可微分多様体
 
 <!-- ex. -->
 **例.** 
-$ X=\left\lbrace 1,2\right\rbrace , Y = \left\lbrace 1,2,3\right\rbrace $ および $T=2^{X} = \left\lbrace \left\lbrace \right\rbrace , \left\lbrace 1\right\rbrace, \left\lbrace 1,2\right\rbrace \right\rbrace $, $ S=\left\lbrace \left\lbrace \right\rbrace , \left\lbrace 1\right\rbrace, \left\lbrace 1,2\right\rbrace ,\left\lbrace 3,1 \right\rbrace, Y \right\rbrace $ とする．
+$ X=\lbrace 1,2\rbrace , Y = \lbrace 1,2,3\rbrace $ および $T=2^{X} = \lbrace \lbrace \rbrace , \lbrace 1\rbrace, \lbrace 1,2\rbrace \rbrace $, $ S=\lbrace \lbrace \rbrace , \lbrace 1\rbrace, \lbrace 1,2\rbrace ,\lbrace 3,1 \rbrace, Y \rbrace $ とする．
 
 $(f(1), f(2)) = (1, 2) $ で定まる写像 $f$ は $ (X,T) $ から $(Y,S)$ への埋め込みである．
 
-一方，$(f(1), f(2)) = (2, 1) $ で定まる異なる写像 $f$ は，$f^{-1}[\lbrace1\rbrace] = \lbrace2\rbrace$ を満たし，連続写像ではないので埋め込みでもない．
+一方，$(f(1), f(2)) = (2, 1) $ で定まる異なる写像 $f$ は，$f^{-1}[\{1\}] = \{2\}$ を満たし，連続写像ではないので埋め込みでもない．
 <!-- end ex. -->
 
 <!-- ex. -->
-**例.** $n$ 次元 実数 空間 $\mathbb{R}^{n} $ ($n \in \mathbb{N} $) は $(n + 1)$ 次元 実数 空間 $\mathbb{R}^{n+1} $ において，超平面 $ P = \left\lbrace \left( x_{j}\right) _{j=1}^{n+1}| x_{n+1}=0 \text{ and } ∀ j \in \lbrace1,...,n\rbrace,  x_{j}\in \mathbb{R} \right\rbrace $ として埋め込まれる．ただし，ここで埋め込みは 包含写像 $ \iota\colon P \to \mathbb{R}^{n+1} $.
+**例.** $n$ 次元 実数 空間 $\mathbb{R}^{n} $ ($n \in \mathbb{N} $) は $(n + 1)$ 次元 実数 空間 $\mathbb{R}^{n+1} $ において，超平面 $ P = \lbrace \left( x_{j}\right) _{j=1}^{n+1}| x_{n+1}=0 \text{ and } ∀ j \in \{1,...,n\},  x_{j}\in \mathbb{R} \rbrace $ として埋め込まれる．ただし，ここで埋め込みは 包含写像 $ \iota\colon P \to \mathbb{R}^{n+1} $.
 <!-- end ex. -->
 
 <!-- ex. -->
@@ -94,7 +94,7 @@ $ h_{ij} (p) = \dfrac{\partial y^{k}}{\partial x^{i}}(p) \dfrac{\partial y^{l}}{
 
 1. $e_{a}\left( p\right) =e_{a}^{j}\left( p\right) \dfrac{\partial }{\partial x^{j}}\left( p\right) \in T_{p}M $ 
 
-2. $n_{b}(p) = n_{b} ^{j}(p) \dfrac{\partial }{\partial y^{j}} \left( p\right) \in T_{p} N  \, (j\in \left\lbrace 1,\ldots ,n\right\rbrace,\, b\in \left\lbrace 1,\ldots ,n-m\right\rbrace  ) $
+2. $n_{b}(p) = n_{b} ^{j}(p) \dfrac{\partial }{\partial y^{j}} \left( p\right) \in T_{p} N  \, (j\in \lbrace 1,\ldots ,n\rbrace,\, b\in \lbrace 1,\ldots ,n-m\rbrace  ) $
 
 以下，点の引数を省略する．$\dfrac{\partial }{\partial x^{j}}=\dfrac{\partial y^{k}}{\partial x^{j}}\dfrac{\partial }{\partial y^{k}}$ より $e_{a}=e_{a}^{j}\dfrac{\partial }{\partial x^{j}}=e_{a}^{j}\dfrac{\partial y^{k}}{\partial x^{j}}\dfrac{\partial }{\partial y^{k}}$ なので 直交条件 $g_{N}\left( e_{a},n_{b}\right) =0$ より，
 
