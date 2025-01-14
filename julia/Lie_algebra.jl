@@ -120,7 +120,7 @@ function test_so4()
     show_products_with(plus_gen, minus_gen)
     return 0
 end
-test_so4()
+# test_so4()
 #%%
 function so_2_1_lie_algebra()
     n = 3
@@ -134,7 +134,7 @@ function so_2_1_lie_algebra()
 
     return 0
 end
-so_2_1_lie_algebra()
+# so_2_1_lie_algebra()
 #%%
 function structure_so21(i,j,k)
     c123 = -1
@@ -155,6 +155,7 @@ function structure_so21(i,j,k)
     end
 end
 function killing_form(structure, dim)
+    println("The Killing form of the structure constants")
     _ans = zeros(dim, dim)
     for j in 1:dim
         for k in 1:dim
@@ -164,7 +165,7 @@ function killing_form(structure, dim)
     end
     return _ans
 end
-killing_form(structure_so21, 3)
+# killing_form(structure_so21, 3)
 #%%
 function ortho_normal_metric(r, s, i, j)
     # from 1 to r: +1 if i == j
@@ -194,15 +195,18 @@ function ortho_normal_metric_matrix(r, s)
     return g
 end
 
-# Example usage
-r = 3  # Number of +1 components
-s = 2  # Number of -1 components
-g = ortho_normal_metric_matrix(r, s)
+function test_metric()
+    # Example usage
+    r = 3  # Number of +1 components
+    s = 2  # Number of -1 components
+    g = ortho_normal_metric_matrix(r, s)
 
-# Print the result
-println("The metric tensor g[i, j] is:")
-println(g)
+    # Print the result
+    println("The metric tensor g[i, j] is:")
+    println(g)
 
+    return 0
+end
 #%%
 
 function kronecker_delta(i, j)
@@ -283,10 +287,22 @@ function check_commutator(r, s)
     return 0
 end
 # r, s = 2, 1
-r, s = 3, 1
-@time check_commutator(r, s)
+# r, s = 3, 1
+# @time check_commutator(r, s)
 #%%
 # The Lie algebra of the Lorentz group SO(3, 1)
+
+using Permutations
+
+function levi_civita(indices::Vector{Int})
+    # https://chatgpt.com/share/67867b64-3720-800e-9e4b-37d7b07225ae
+    if length(Set(indices)) < length(indices)
+        return 0  # Indices are not distinct
+    else
+        return sign(Permutation(indices))
+    end
+end
+
 function so_3_1_lie_algebra()
     r, s = 3, 1
     n = r + s
@@ -301,13 +317,13 @@ function so_3_1_lie_algebra()
     J = [J32, J13, J21]
 
     m = n - 1
-    for i in 1:m
-        for j in 1:m
-        @show commutator(K[i] + J[i], K[j] + J[j])
-        end
+    for (i, j) in permutations(1:m, 2)
+        @show (i, j)
+        @show commutator(J[i], J[j]) == sum(levi_civita([i, j, k]) * J[k] for k in 1:m)
     end
-
-    return K, J
+    
+    @show K, J
+    return 0
 end
 so_3_1_lie_algebra()
 #%%
@@ -360,19 +376,22 @@ function sl_2_R_lie_algebra()
     end
     return 0
 end
-sl_2_R_lie_algebra()
+# sl_2_R_lie_algebra()
 
 #%%
-n = 2
-diag1 = sl_n_R_lie_algebra(n, 1, 1)
-delta12 = sl_n_R_lie_algebra(n, 1, 2)
-delta21 = sl_n_R_lie_algebra(n, 2, 1)
-commutator(diag1, delta21)
-#%%
-e1 = diag1 / 2
+function sl2_R_test()
+    n = 2
+    diag1 = sl_n_R_lie_algebra(n, 1, 1)
+    delta12 = sl_n_R_lie_algebra(n, 1, 2)
+    delta21 = sl_n_R_lie_algebra(n, 2, 1)
+    commutator(diag1, delta21)
+    e1 = diag1 / 2
     e2 = (delta12 + delta21) / 2
     e3 = - (delta12 - delta21) / 2
     basis = [e1, e2, e3]
-    commutator(basis[1], basis[2])
--e3
-structure_so21(1,2,3)
+    @show commutator(basis[1], basis[2])-e3
+    @show structure_so21(1,2,3)
+    return 0
+end
+#%%
+println("Module: julia/Lie_algebra.jl")
