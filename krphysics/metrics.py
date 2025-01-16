@@ -51,8 +51,14 @@ def geodesics(μ, x, Γ, λ = lamda):
 
 # %%
 if __name__ == '__main__':
+    from utils.result import print_md, print_latex
     g = SchwarzschildMetric(eta00=-1,rs=True)
-    print("Schwarzschild metric"); display(g);
+    
+    print_md("Schwarzschild metric", mode='a'); display(g);
+    print_latex(g)
     g = KerrMetric()
-    print("Kerr metric"); display(g);
+    print_md("Kerr metric", mode='a'); display(g);
+    print_latex(g)
+    
+    
 # %%
