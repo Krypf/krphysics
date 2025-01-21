@@ -1,4 +1,5 @@
 #%%
+
 # Function to construct a generator of SO(n)
 function so_generator(n, i, j)
     # n: Dimension of the space
@@ -316,10 +317,26 @@ function so_3_1_lie_algebra()
     J21 = so_generator(n, 2, 1)
     J = [J32, J13, J21]
 
+    Jplus = (J + 1im * K) / 2
+    Jminus = (J - 1im * K) / 2
+
     m = n - 1
+    count_ = 1
+    for x in [J, K, Jplus, Jminus]
+        for j in 1:m
+            @show count_ , j
+            display(1im * x[j])# hermitian
+        end
+        count_ += 1
+    end
+
     for (i, j) in permutations(1:m, 2)
         @show (i, j)
-        @show commutator(J[i], J[j]) == sum(levi_civita([i, j, k]) * J[k] for k in 1:m)
+        # @show commutator(J[i], J[j]) == sum(levi_civita([i, j, k]) * J[k] for k in 1:m)
+        # @show commutator(K[i], K[j]) == - sum(levi_civita([i, j, k]) * J[k] for k in 1:m)# minus
+        # @show commutator(J[i], K[j]) == sum(levi_civita([i, j, k]) * K[k] for k in 1:m)
+        # @show commutator(Jplus[i], Jplus[j]) == sum(levi_civita([i, j, k]) * Jplus[k] for k in 1:m)
+        # @show commutator(Jminus[i], Jminus[j]) == sum(levi_civita([i, j, k]) * Jminus[k] for k in 1:m)
     end
     
     @show K, J
