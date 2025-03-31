@@ -58,6 +58,7 @@ class CarterSolution:
 
     def show(self):
         # Print specific computed expressions
+        print(f"Show the methods of {type(self)}")
         print(f"Delta_lambda = {self.Delta_lambda()}")
         print(f"Delta_mu = {self.Delta_mu()}")
         print(f"P_lambda = {self.P_lambda()}")
@@ -67,7 +68,8 @@ class CarterSolution:
 
     def show_latex(self):
         # Print computed expressions in LaTeX format
-        # from sage.misc.latex import latex
+        print(f"Show the latex representations of {type(self)}")
+
         print(f"Delta_lambda = {latex(self.Delta_lambda())}")
         print(f"Delta_mu = {latex(self.Delta_mu())}")
         print(f"P_lambda = {latex(self.P_lambda())}")
@@ -145,29 +147,21 @@ class TypeD(CarterSolution):
     def Q_mu(self):
         return 1
 
-    
-# Instantiate class
-solution_TypeB_plus = TypeB_plus(chart=chart)
-solution_TypeC_plus = TypeC_plus(chart=chart)
-solution_TypeD = TypeD(chart=chart)
-
 # Display results
-# print("TypeB_plus")
-# solution_TypeB_plus.show()
-# solution_TypeB_plus.show_latex()
-print("TypeC_plus")
-solution_TypeC_plus.show()
-solution_TypeC_plus.show_latex()
-# print("TypeD")
-# solution_TypeD.show()
-# solution_TypeD.show_latex()
+def print_solution(solution: CarterSolution):
+    solution.show()
+    solution.show_latex()
 
 # Instantiate and use the class
-solution = solution_TypeC_plus
-tetrads = solution.omega_forms()
+# solution = TypeB_plus(chart=chart)
+solution = TypeC_plus(chart=chart)
+# solution = TypeD(chart=chart)
 
-# Display the tetrads and their exterior derivatives
-for x in tetrads:
-    print(x.display())
-    show(x.exterior_derivative().display())
-    print(latex(diff(x).display()))
+print_solution(solution)
+
+# tetrads = solution.omega_forms()
+# # Display the tetrads and their exterior derivatives
+# for x in tetrads:
+#     print(x.display())
+#     show(x.exterior_derivative().display())
+#     print(latex(diff(x).display()))
