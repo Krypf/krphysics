@@ -55,6 +55,38 @@ class CarterSolution:
         omega_m2.set_comp(chart.frame())[3] = -(sqrt(Z * Delta_lambda) / Z) * Q_mu  # chi component
 
         return [omega_p1, omega_m1, omega_p2, omega_m2]
+    
+    def metric(self):
+        """ Calculate the metric ds^2 """
+        M = self.chart.domain()
+        g = M.metric(name="g")  # metric tensor g_ij
+
+        # 座標変数
+        # lambda_, mu, psi, chi = self.chart._first, self.chart._second, self.chart._third, self.chart._fourth
+
+        # 計量成分
+        Z = self.Z()
+        Delta_lambda = self.Delta_lambda()
+        Delta_mu = self.Delta_mu()
+        P_lambda = self.P_lambda()
+        P_mu = self.P_mu()
+        Q_lambda = self.Q_lambda()
+        Q_mu = self.Q_mu()
+
+        g[0, 0] = Z / Delta_lambda  # coefficient of dλ² 
+        g[1, 1] = Z / Delta_mu      # coefficient of dμ² 
+        g[2, 2] = Delta_mu / Z * P_lambda^2  # dψ²
+        g[3, 3] = Delta_mu / Z * Q_lambda^2  # dχ²
+        g[2, 3] = -Delta_mu / Z * P_lambda * Q_lambda  # dψ dχ (cross-term)
+
+        g[2, 2] -= Delta_lambda / Z * P_mu^2  # add to the dψ²-term
+        g[3, 3] -= Delta_lambda / Z * Q_mu^2  # add to the dχ²-term
+        g[2, 3] += Delta_lambda / Z * P_mu * Q_mu  # add to the dψ dχ-term
+
+        # symmetric
+        g[3, 2] = g[2, 3]
+
+        return g
 
     def show(self):
         # Print specific computed expressions
@@ -157,7 +189,8 @@ def print_solution(solution: CarterSolution):
 solution = TypeC_plus(chart=chart)
 # solution = TypeD(chart=chart)
 
-print_solution(solution)
+# print_solution(solution)
+print(solution.metric())
 
 # tetrads = solution.omega_forms()
 # # Display the tetrads and their exterior derivatives
