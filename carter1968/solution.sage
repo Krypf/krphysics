@@ -30,14 +30,23 @@ class CarterSolution:
     def Z(self):
         return self.P_lambda() * self.Q_mu() - self.P_mu() * self.Q_lambda()
 
+    def get_parameters(self):
+        """ 
+        Retrieve all required parameters and return them as a tuple.
+        This allows easy access to multiple values at once.
+        """
+        return (
+            self.Z(),              # Get Z
+            self.Delta_lambda(),   # Get Delta_lambda
+            self.Delta_mu(),       # Get Delta_mu
+            self.P_lambda(),       # Get P_lambda
+            self.P_mu(),           # Get P_mu
+            self.Q_lambda(),       # Get Q_lambda
+            self.Q_mu()            # Get Q_mu
+        )
+
     def omega_forms(self):
-        Z = self.Z()
-        Delta_lambda = self.Delta_lambda()
-        Delta_mu = self.Delta_mu()
-        P_lambda = self.P_lambda()
-        P_mu = self.P_mu()
-        Q_lambda = self.Q_lambda()
-        Q_mu = self.Q_mu()
+        Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
 
         # Define the 1-forms
         omega_p1 = M.diff_form(1, name='omega^{+1}')
@@ -64,14 +73,7 @@ class CarterSolution:
         # 座標変数
         # lambda_, mu, psi, chi = self.chart._first, self.chart._second, self.chart._third, self.chart._fourth
 
-        # 計量成分
-        Z = self.Z()
-        Delta_lambda = self.Delta_lambda()
-        Delta_mu = self.Delta_mu()
-        P_lambda = self.P_lambda()
-        P_mu = self.P_mu()
-        Q_lambda = self.Q_lambda()
-        Q_mu = self.Q_mu()
+        Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
 
         g[0, 0] = Z / Delta_lambda  # coefficient of dλ² 
         g[1, 1] = Z / Delta_mu      # coefficient of dμ² 
@@ -87,6 +89,43 @@ class CarterSolution:
         g[3, 2] = g[2, 3]
 
         return g
+    def hat_E(self):
+        Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
+
+        E = matrix([
+        [sqrt(Z/Delta_lambda), 0, 0, 0],
+        [0, sqrt(Z/Delta_mu), 0, 0],
+        [0, 0, (sqrt(Z*Delta_mu)/Z) * P_lambda, -(sqrt(Z*Delta_mu)/Z) * Q_lambda],
+        [0, 0, (sqrt(Z*Delta_lambda)/Z) * P_mu, -(sqrt(Z*Delta_lambda)/Z) * Q_mu]
+        ])
+        return E
+
+    def E_inv(self):
+        Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
+        
+        return matrix(SR, [
+            [1/sqrt(Z / Delta_lambda), 0, 0, 0],
+            [0, 1/sqrt(Z / Delta_mu), 0, 0],
+            [0, 0, Q_mu/sqrt(Z * Delta_mu), -Q_lambda/sqrt(Z * Delta_lambda)],
+            [0, 0, P_mu/sqrt(Z * Delta_mu), -P_lambda/sqrt(Z * Delta_lambda)]
+        ])
+
+    def compute_orthonormal_basis(self):
+        """
+        Computes and displays the transformed vector fields forming an orthonormal basis.
+        
+        Parameters:
+            self.chart: The chart or manifold coordinate frame (with .frame() method)
+            self = solution: An object with an .E_inv() method 
+        Returns:
+            List of vector fields forming an orthonormal basis.
+        """
+        orthonormal_basis = []
+        for j in range(4):
+            vec = sum(self.chart.frame()[i] * self.E_inv()[i, j] for i in range(4))
+            orthonormal_basis.append(vec)
+            show(vec.display())
+        return orthonormal_basis
 
     def show(self):
         # Print specific computed expressions
@@ -108,6 +147,11 @@ class CarterSolution:
         print(f"P_mu = {latex(self.P_mu())}")
         print(f"Q_lambda = {latex(self.Q_lambda())}")
         print(f"Q_mu = {latex(self.Q_mu())}")
+
+    # Display results
+    def print_solution(self):
+        self.show()
+        self.show_latex()
 
 class TypeB_plus(CarterSolution):
     def Delta_lambda(self):
@@ -179,18 +223,41 @@ class TypeD(CarterSolution):
     def Q_mu(self):
         return 1
 
-# Display results
-def print_solution(solution: CarterSolution):
-    solution.show()
-    solution.show_latex()
+symbolic = 'f'
+f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
+
+def commutator_fields(basis, i, j, dummy_sym = f_sym):
+    a = basis[i](basis[j](f_sym)) - basis[j](basis[i](f_sym))
+    return a
+
+def show_commutator(basis):
+    n = len(basis)
+    for i in range(n):
+        for j in range(n):
+            if i < j:
+                show(i, j)
+                x = commutator_fields(basis, i, j).display()
+                show(x)
+                show(x.coefficient(diff(f, mu)))
 
 # Instantiate and use the class
 # solution = TypeB_plus(chart=chart)
 solution = TypeC_plus(chart=chart)
 # solution = TypeD(chart=chart)
 
-# print_solution(solution)
-print(solution.metric())
+# Create a row vector of vector fields
+part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
+
+orthonormal_basis = solution.compute_orthonormal_basis()
+# show_commutator(orthonormal_basis)
+x = commutator_fields(orthonormal_basis, 0, 1)
+x_expr = x.expr()
+coeff = x_expr.coefficient(diff(f_sym.expr(), chart[1]))
+show(coeff)
+
+# g = solution.metric()
+# show(g.display())
+
 
 # tetrads = solution.omega_forms()
 # # Display the tetrads and their exterior derivatives
