@@ -1,5 +1,6 @@
 # Define the 4-dimensional manifold with coordinates
-M = Manifold(4, 'M', structure='differentiable')
+dim = 4
+M = Manifold(dim, 'M', structure='differentiable')
 chart = M.chart(r'lambda_ mu psi chi')
 var('Lambda e h')
 m1, m2 = var('m1 m2')
@@ -110,7 +111,7 @@ class CarterSolution:
             [0, 0, P_mu/sqrt(Z * Delta_mu), -P_lambda/sqrt(Z * Delta_lambda)]
         ])
 
-    def compute_orthonormal_basis(self):
+    def compute_orthonormal_basis(self, _show = False):
         """
         Computes and displays the transformed vector fields forming an orthonormal basis.
         
@@ -121,10 +122,11 @@ class CarterSolution:
             List of vector fields forming an orthonormal basis.
         """
         orthonormal_basis = []
-        for j in range(4):
-            vec = sum(self.chart.frame()[i] * self.E_inv()[i, j] for i in range(4))
+        for j in range(dim):
+            vec = sum(self.chart.frame()[i] * self.E_inv()[i, j] for i in range(dim))
             orthonormal_basis.append(vec)
-            show(vec.display())
+            if _show:
+                show(vec.display())
         return orthonormal_basis
 
     def show(self):
@@ -226,7 +228,7 @@ class TypeD(CarterSolution):
 symbolic = 'f'
 f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
 
-def commutator_fields(basis, i, j, dummy_sym = f_sym):
+def commutator_fields(basis, i, j, f_sym = f_sym):
     a = basis[i](basis[j](f_sym)) - basis[j](basis[i](f_sym))
     return a
 
@@ -240,6 +242,101 @@ def show_commutator(basis):
                 show(x)
                 show(x.coefficient(diff(f, mu)))
 
+def structure_constants(basis, i, j, chart=chart, f_sym=f_sym):
+    x = commutator_fields(basis, i, j)
+    x_expr = x.expr()
+    coeffs = []
+    for k in range(dim):
+        coeffs.append(x_expr.coefficient(diff(f_sym.expr(), chart[k])))
+    return (coeffs)
+
+def show_structure(basis):
+    for i in range(dim):
+        for j in range(dim):
+            if i < j:
+                show(i,j)
+                show(structure_constants(basis, i, j))
+
+def compute_structure_tensor(basis, dim=dim, chart=chart, f_sym=f_sym):
+    """
+    Computes the full structure constants tensor c[k][i][j],
+    where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
+
+    Parameters:
+    - basis: list of vector fields
+    - dim: dimension of the space
+    - chart: coordinate chart
+    - f_sym: symbolic version of the frame
+    - basis: basis to be used for commutators
+
+    Returns:
+    - c: a 3D list [k][i][j] representing c^k_{ij}
+    """
+    # Initialize 3D list with zeros
+    c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
+
+    for i in range(dim):
+        for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
+            # Compute the commutator vector field
+            x = commutator_fields(basis, i, j)
+            x_expr = x.expr()
+
+            coeffs = structure_constants(basis, i, j)
+            for k in range(dim):
+                c[k][i][j] = coeffs[k]
+                c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
+
+    return c
+
+def lower_connection_coefficients(i, l, j, g, c, mu_range = dim):
+    """
+    Computes the sum over mu of:
+    gamma_(i, l, j) = 1/2 * (g_{i mu} * c^mu_{l j} - g_{j mu} * c^mu_{l i} + g_{l mu} * c^mu_{i j})
+
+    Parameters:
+    - i, l, j: lower indices (integers)
+    - g: a 2D list or matrix representing the tensor g[i][mu]
+    - c: a 3D list representing the tensor c[mu][a][b]
+    - mu_range: iterable of values mu runs over (e.g. range(4))
+
+    Returns:
+    - The symbolic or numeric result of summing T^mu(i, l, j) over mu
+    """
+    return sum(
+        (1/2) * (g[i][mu] * c[mu][l][j] - g[j][mu] * c[mu][l][i] + g[l][mu] * c[mu][i][j])
+        for mu in range(mu_range)
+    )
+
+def upper_connection_coefficients(i, l, j, g, c, mu_range = dim, g_inv = None):
+    """
+    gamma^{i}_(l, j) = sum of g^{i a} gamma_(a, l, j)
+    """
+    if g_inv == "eta":
+        g_inv = g
+    
+    return sum(
+        g_inv[i][a] * lower_connection_coefficients(a, l, j, g, c, mu_range = mu_range)
+        for a in range(mu_range)
+    )
+
+def all_upper_coefficients(g, c, mu_range = dim, g_inv = None):
+    # Initialize 3D list with zeros
+    gamma = [[[0 for j in range(dim)] for l in range(dim)] for i in range(dim)]
+
+    for i in range(dim):
+        for l in range(dim):
+            for j in range(dim):
+                gamma[i][l][j] = upper_connection_coefficients(i, l, j, g, c, mu_range = mu_range, g_inv = g_inv)
+                # mu_range -> dim にかえる
+    return gamma
+
+def connection_one_forms(solution, gamma, dim=dim):
+    omega = [[0 for j in range(dim)] for i in range(dim)]
+    for i in range(dim):
+        for j in range(dim):
+            omega[i][j] = sum(gamma[i][l][j] * solution.omega_forms()[l] for l in range(dim))
+            show(omega[i][j].display())
+    return omega
 # Instantiate and use the class
 # solution = TypeB_plus(chart=chart)
 solution = TypeC_plus(chart=chart)
@@ -247,17 +344,17 @@ solution = TypeC_plus(chart=chart)
 
 # Create a row vector of vector fields
 part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
-
 orthonormal_basis = solution.compute_orthonormal_basis()
 # show_commutator(orthonormal_basis)
-x = commutator_fields(orthonormal_basis, 0, 1)
-x_expr = x.expr()
-coeff = x_expr.coefficient(diff(f_sym.expr(), chart[1]))
-show(coeff)
 
 # g = solution.metric()
 # show(g.display())
-
+eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
+g = eta
+c = compute_structure_tensor(orthonormal_basis)
+gamma = all_upper_coefficients(g, c, g_inv = "eta")
+#show(gamma)
+omega = connection_one_forms(solution, gamma)
 
 # tetrads = solution.omega_forms()
 # # Display the tetrads and their exterior derivatives
