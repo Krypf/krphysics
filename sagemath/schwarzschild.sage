@@ -1,18 +1,20 @@
 class Schwarzschild:
     # Constants
     G = var('G')    # Gravitational constant
-    M = var('M')    # Mass of the central object
+    Mass = var('M')    # Mass of the central object
     c = var('c')    # Speed of light
+    dim = 4
+
     def __init__(self,
         args_name = 't r theta phi',
-        manifold = Manifold(4, 'Schwarzschild', structure='Lorentzian'),
+        manifold = Manifold(dim, 'Schwarzschild', structure='Lorentzian'),
         has_radius = True,
         neighborhood_name = 'U',
         ):
         if has_radius:
             self.radius = var('R_S')  # Schwarzschild radius
         else:
-            self.radius = 2 * G * M / c**2  # Schwarzschild radius
+            self.radius = 2 * G * Mass / c**2  # Schwarzschild radius
         # Define the manifold
         self.manifold = manifold
         self.args_name = args_name
@@ -36,7 +38,7 @@ class Schwarzschild:
         return abs_g_00
 
     def global_domain(self):
-        U = spacetime.spherical_chart().domain()# Open subset U of the 4-dimensional Lorentzian manifold Schwarzschild
+        U = self.spherical_chart().domain()# Open subset U of the 4-dimensional Lorentzian manifold Schwarzschild
         return U
 
     # Metric components
@@ -80,24 +82,20 @@ class Schwarzschild:
         fs = [f0, f1, f2, f3]
         return fs
 
+load("~/krphysics/sagemath/geometry.sage")
 spacetime = Schwarzschild()
 # Display the metric tensor
-g_S = spacetime.metric_tensor()
-es = spacetime.ortho_normal_frame()
-fs = spacetime.ortho_normal_tetrads()
-dim = 4
-def show_vectors(fs):
-    print("Tetrads")
-    for i in range(dim):
-        print(fs[i].display())
-    print("Exterior derivatives of tetrads")
-    for i in range(dim):
-        print(diff(fs[i]).display())
-def show_commutators(es):
-    print("Commutators of orthonormal basis")
-    for i in range(dim):
-        for j in range(dim):
-            print((i, j), es[i].bracket(es[j]).display())
+metric = g_S = spacetime.metric_tensor()
+basis = es = spacetime.ortho_normal_frame()
+forms = fs = spacetime.ortho_normal_tetrads()
 
-show_commutators(es)
 # Riemann_curvature = g_S.riemann()
+# show_commutators(es)
+# show_metric_values(g_S, es)
+# pairing_forms_vectors(fs, es)
+# show_first_christoffel_symbols(metric, basis)
+# show_structure_coefficients(basis, forms)
+for i in range(4):  # Loop over all i, j, mu
+    for L in range(4):
+        for j in range(4):
+            print(lower_connection_term(i, L, j, metric, basis, forms).display())
