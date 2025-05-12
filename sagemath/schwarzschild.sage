@@ -1,7 +1,7 @@
 class Schwarzschild:
     # Constants
     G = var('G')    # Gravitational constant
-    Mass = var('M')    # Mass of the central object
+    Mass = var('M_S')    # Mass of the central object
     c = var('c')    # Speed of light
     dim = 4
 
@@ -82,20 +82,76 @@ class Schwarzschild:
         fs = [f0, f1, f2, f3]
         return fs
 
+    def E_hat(self):
+        r, theta, F = self.components()
+        # Construct the matrix
+        E = matrix([
+            [sqrt(F), 0, 0, 0],
+            [0, 1 / sqrt(F), 0, 0],
+            [0, 0, r, 0],
+            [0, 0, 0, r * sin(theta)]
+        ])
+        return E
+
+    def structure_tetrad(self, i, j):
+        basis = self.ortho_normal_frame()
+        com = commutator_field(basis, i, j)
+        E = self.E_hat()
+        n = len(basis)
+        cs = [0 for _ in range(n)]
+        for k in range(n):
+            cs[k] = sum(com[a] * E[k][a] for a in range(n))
+        return cs
+
+    def compute_structure_coefficients(self, dim=dim):
+        """
+        Computes the full structure constants tensor c[k][i][j],
+        where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
+
+        Parameters:
+        - dim: dimension of the space
+        - basis: basis to be used for commutators
+
+        Returns:
+        - c: a 3D list [k][i][j] representing c^k_{ij}
+        """
+        # Initialize 3D list with zeros
+        c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
+
+        for i in range(dim):
+            for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
+                coeffs = self.structure_tetrad(i, j)
+                for k in range(dim):
+                    c[k][i][j] = coeffs[k]
+                    c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
+        return c
+
 load("~/krphysics/sagemath/geometry.sage")
+import time
+t0 = time.time()
 spacetime = Schwarzschild()
 # Display the metric tensor
 metric = g_S = spacetime.metric_tensor()
 basis = es = spacetime.ortho_normal_frame()
 forms = fs = spacetime.ortho_normal_tetrads()
 
+eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
+c = spacetime.compute_structure_coefficients()
+gamma = all_upper_coefficients(eta, c, g_inv = "eta", manifold = spacetime.neighborhood)
+Riem = Riemannian_curvature(basis, gamma, c, dim=dim)
+Ric = Ricci_tensor(Riem)
+R = scalar_curvature(Ric, eta)
+show(R.display())
+t1= time.time()
+print(t1 - t0)
 # Riemann_curvature = g_S.riemann()
 # show_commutators(es)
 # show_metric_values(g_S, es)
 # pairing_forms_vectors(fs, es)
 # show_first_christoffel_symbols(metric, basis)
 # show_structure_coefficients(basis, forms)
-for i in range(4):  # Loop over all i, j, mu
-    for L in range(4):
-        for j in range(4):
-            print(lower_connection_term(i, L, j, metric, basis, forms).display())
+def show_lower_christoffel():
+    for i in range(4):  # Loop over all i, j, mu
+        for L in range(4):
+            for j in range(4):
+                print(lower_connection_term(i, L, j, metric, basis, forms).display())
