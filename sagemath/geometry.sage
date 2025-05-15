@@ -19,6 +19,50 @@ def show_commutators(basis):
             if i < j:
                 print((i, j), basis[i].bracket(basis[j]).display())
 
+# another form of functions for commutator algebra
+
+def commutator_symbol(basis, i, j, f_sym = f_sym):
+    a = basis[i](basis[j](f_sym)) - basis[j](basis[i](f_sym))
+    return a
+
+def structure_constants(basis, i, j, chart=chart, f_sym=f_sym):
+    # Compute the commutator vector field
+    x = commutator_symbol(basis, i, j)
+    x_expr = x.expr()
+    coeffs = []
+    for k in range(dim):
+        coeffs.append(x_expr.coefficient(diff(f_sym.expr(), chart[k])))
+    return (coeffs)
+
+def compute_structure_tensor(basis, dim=dim, chart=chart, f_sym=f_sym):
+    """
+    Computes the full structure constants tensor c[k][i][j],
+    where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
+
+    Parameters:
+    - basis: list of vector fields
+    - dim: dimension of the space
+    - chart: coordinate chart
+    - f_sym: symbolic version of the frame
+    - basis: basis to be used for commutators
+
+    Returns:
+    - c: a 3D list [k][i][j] representing c^k_{ij}
+    """
+    # Initialize 3D list with zeros
+    c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
+
+    for i in range(dim):
+        for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
+            coeffs = structure_constants(basis, i, j)
+            for k in range(dim):
+                c[k][i][j] = coeffs[k]
+                c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
+
+    return c
+
+# end commutator algebra
+
 def pairing_forms_vectors(forms, vectors):
     for i in range(len(forms)):  # Iterate over indices of forms
         for j in range(len(vectors)):  # Iterate over indices of vectors
@@ -208,12 +252,32 @@ def scalar_curvature(Ric, g_inv, dim=dim):
     return R
 
 # print 
-def show_four_tensor(Riem):
+def show_two_tensor(tensor, dim, array=True, Mathematica=False, result="result.txt"):
+    for i in range(dim):
+        for j in range(dim):
+            # if i < j:
+            if array:
+                x = tensor[i][j]
+            else:# matrix
+                x = tensor[i,j]
+            if x != 0:
+                show(i, j)
+                show(x.display())
+                if Mathematica:
+                    with open(result, "a") as f:
+                        f.write(f"({i}, {j}) ")
+                        f.write(str(x.display()))
+                        f.write("\n")
+                    # print(mathematica_code(x))
+    return 0
+
+def show_four_tensor(Riem, dim):
     for i in range(dim):
         for j in range(dim):
             for k in range(dim):
                 for l in range(dim):
-                    x = Riem[i][j][k][l]
-                    if x != 0:
-                        show(i, j, k, l)
-                        show(x.display())
+                    if k < l:
+                        x = Riem[i][j][k][l]
+                        if x != 0:
+                            show(i, j, k, l)
+                            show(x.display())
