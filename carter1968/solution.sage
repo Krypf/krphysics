@@ -1,10 +1,15 @@
+load("~/krphysics/sagemath/geometry.sage")
 # Define the 4-dimensional manifold with coordinates
 dim = 4
 M = Manifold(dim, 'M', structure='differentiable')
 chart = M.chart(r'lambda_ mu psi chi')
+symbolic = 'f'
+f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
+
 var('Lambda e h')
 m1, m2 = var('m1 m2')
 n1, n2 = var('n1 n2')
+e1, e2 = var('e1 e2')
 
 class CarterSolution:
     def __init__(self, chart):
@@ -90,7 +95,7 @@ class CarterSolution:
         g[3, 2] = g[2, 3]
 
         return g
-    def hat_E(self):
+    def E_hat(self):
         Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
 
         E = matrix([
@@ -129,6 +134,72 @@ class CarterSolution:
                 show(vec.display())
         return orthonormal_basis
 
+    def structure_tetrad(self, i, j):
+        basis = self.compute_orthonormal_basis()
+        com = commutator_field(basis, i, j)
+        E = self.E_hat()
+        n = len(basis)
+        cs = [0 for _ in range(n)]
+        for k in range(n):
+            cs[k] = sum(com[a] * E[k][a] for a in range(n))
+        return cs
+
+    def compute_structure_coefficients(self, dim=dim):
+        """
+        Computes the full structure constants tensor c[k][i][j],
+        where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
+
+        Parameters:
+        - dim: dimension of the space
+        - basis: basis to be used for commutators
+
+        Returns:
+        - c: a 3D list [k][i][j] representing c^k_{ij}
+        """
+        # Initialize 3D list with zeros
+        c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
+
+        for i in range(dim):
+            for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
+                coeffs = self.structure_tetrad(i, j)
+                for k in range(dim):
+                    c[k][i][j] = coeffs[k]
+                    c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
+        return c
+
+    def elemag_potential(self):
+        Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
+        X_lambda = e1 * self.chart[0]
+        X_mu = e2 * self.chart[1]
+
+        A = M.diff_form(1, name='potential')
+        A.set_comp(chart.frame())[2] = (P_lambda * X_mu + P_mu * X_lambda) / Z # d_psi
+        A.set_comp(chart.frame())[3] = - (Q_lambda * X_mu + Q_mu * X_lambda) / Z # d_chi
+        return A
+    def field_strength_coord(self):
+        A = self.elemag_potential()
+        F = A.exterior_derivative().components()
+        return F
+    def field_strength_tetrad(self):
+        Einv = self.E_inv() # coordinates to tetrads
+        N = dim
+        F = self.field_strength_coord()
+        field_strength = [[0 for j in range(N)] for i in range(N)]
+        for i in range(N):
+            for j in range(N):
+                field_strength[i][j] = sum(F[a, b] * Einv[a][i] * Einv[b][j] for a in range(N) for b in range(N))
+        return field_strength
+
+    def energy_momentum_tensor(self, g, g_inv):
+        field_strength = self.field_strength_tetrad()
+        F = matrix(field_strength)
+        # g = self.metric()
+        # g_inv = (metric_matrix).inv()
+        trace_term = 1 / 4 * (F.transpose() * g_inv * F * g_inv).trace() * g # not / 4
+        four_pi_T = F * g_inv * F.transpose() - trace_term
+        # multiplied by 4 \pi
+        return four_pi_T
+
     def show(self):
         # Print specific computed expressions
         print(f"Show the methods of {type(self)}")
@@ -155,6 +226,8 @@ class CarterSolution:
         self.show()
         self.show_latex()
 
+class TypeA(CarterSolution):
+    
 class TypeB_plus(CarterSolution):
     def Delta_lambda(self):
         lamda = self.chart[0]
@@ -183,7 +256,7 @@ class TypeC_plus(CarterSolution):
         
     def Delta_lambda(self):
         lamda = self.chart[0]
-        return Lambda * (lamda**4) + (h * (lamda**2) - 2 * m1 * lamda + e**2)
+        return Lambda * (lamda**4) / 3 + (h * (lamda**2) - 2 * m1 * lamda + e**2)# 20250514 one third added
     
     def Delta_mu(self):
         mu = self.chart[1]
@@ -217,7 +290,8 @@ class TypeD(CarterSolution):
         return SR(1/2)  # Convert to Sage symbolic representation
     
     def P_mu(self):
-        return SR(1/2)  # Convert to Sage symbolic representation
+        # negative
+        return SR(-1/2)  # Convert to Sage symbolic representation
     
     def Q_lambda(self):
         return 1
@@ -225,140 +299,58 @@ class TypeD(CarterSolution):
     def Q_mu(self):
         return 1
 
-symbolic = 'f'
-f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
+def show_derivative(solution):
+    # Display the tetrads and their exterior derivatives
+    tetrads = solution.omega_forms()
+    for x in tetrads:
+        print(x.display())
+        show(x.exterior_derivative().display())
 
-def commutator_fields(basis, i, j, f_sym = f_sym):
-    a = basis[i](basis[j](f_sym)) - basis[j](basis[i](f_sym))
-    return a
+def calculate_energy_momentum(solution):
+    potential = solution.elemag_potential()
+    # print(potential.display())
+    F = solution.field_strength_coord()
+    # field_strength = solution.field_strength_tetrad()
+    eta = diagonal_matrix([1, 1, 1, -1])
+    four_pi_T = solution.energy_momentum_tensor(eta, eta)
+    show(2 * four_pi_T)
+    return four_pi_T
 
-def show_commutator(basis):
-    n = len(basis)
-    for i in range(n):
-        for j in range(n):
-            if i < j:
-                show(i, j)
-                x = commutator_fields(basis, i, j).display()
-                show(x)
-                show(x.coefficient(diff(f, mu)))
+def calculate_einstein_tensor(solution, cosmological = True):
+    orthonormal_basis = solution.compute_orthonormal_basis()# show_commutator(orthonormal_basis)
+    # g = solution.metric() # show(g.display())
+    # omega = connection_one_forms(solution, gamma)
+    eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
+    g = eta
+    c = solution.compute_structure_coefficients()
+    # c2 = compute_structure_tensor(orthonormal_basis)
+    gamma = all_upper_coefficients(g, c, g_inv = "eta", manifold = M)
+    Riem = Riemannian_curvature(orthonormal_basis, gamma, c, dim=dim)
+    t1= time.time(); print(t1 - t0);
+    Ric = Ricci_tensor(Riem)
+    # show(show_two_tensor(Ric, dim))
+    R = scalar_curvature(Ric, eta)
+    t1= time.time(); print(t1 - t0);
+    Einstein_tensor = matrix(Ric) - 1 / 2 * R * g
+    # show_two_tensor(Einstein_tensor, dim, array=False)
+    if cosmological:
+        LHS = Einstein_tensor - (Lambda * g)
+        return LHS
+    return Einstein_tensor
 
-def structure_constants(basis, i, j, chart=chart, f_sym=f_sym):
-    x = commutator_fields(basis, i, j)
-    x_expr = x.expr()
-    coeffs = []
-    for k in range(dim):
-        coeffs.append(x_expr.coefficient(diff(f_sym.expr(), chart[k])))
-    return (coeffs)
-
-def show_structure(basis):
-    for i in range(dim):
-        for j in range(dim):
-            if i < j:
-                show(i,j)
-                show(structure_constants(basis, i, j))
-
-def compute_structure_tensor(basis, dim=dim, chart=chart, f_sym=f_sym):
-    """
-    Computes the full structure constants tensor c[k][i][j],
-    where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
-
-    Parameters:
-    - basis: list of vector fields
-    - dim: dimension of the space
-    - chart: coordinate chart
-    - f_sym: symbolic version of the frame
-    - basis: basis to be used for commutators
-
-    Returns:
-    - c: a 3D list [k][i][j] representing c^k_{ij}
-    """
-    # Initialize 3D list with zeros
-    c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
-
-    for i in range(dim):
-        for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
-            # Compute the commutator vector field
-            x = commutator_fields(basis, i, j)
-            x_expr = x.expr()
-
-            coeffs = structure_constants(basis, i, j)
-            for k in range(dim):
-                c[k][i][j] = coeffs[k]
-                c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
-
-    return c
-
-def lower_connection_coefficients(i, l, j, g, c, mu_range = dim):
-    """
-    Computes the sum over mu of:
-    gamma_(i, l, j) = 1/2 * (g_{i mu} * c^mu_{l j} - g_{j mu} * c^mu_{l i} + g_{l mu} * c^mu_{i j})
-
-    Parameters:
-    - i, l, j: lower indices (integers)
-    - g: a 2D list or matrix representing the tensor g[i][mu]
-    - c: a 3D list representing the tensor c[mu][a][b]
-    - mu_range: iterable of values mu runs over (e.g. range(4))
-
-    Returns:
-    - The symbolic or numeric result of summing T^mu(i, l, j) over mu
-    """
-    return sum(
-        (1/2) * (g[i][mu] * c[mu][l][j] - g[j][mu] * c[mu][l][i] + g[l][mu] * c[mu][i][j])
-        for mu in range(mu_range)
-    )
-
-def upper_connection_coefficients(i, l, j, g, c, mu_range = dim, g_inv = None):
-    """
-    gamma^{i}_(l, j) = sum of g^{i a} gamma_(a, l, j)
-    """
-    if g_inv == "eta":
-        g_inv = g
-    
-    return sum(
-        g_inv[i][a] * lower_connection_coefficients(a, l, j, g, c, mu_range = mu_range)
-        for a in range(mu_range)
-    )
-
-def all_upper_coefficients(g, c, mu_range = dim, g_inv = None):
-    # Initialize 3D list with zeros
-    gamma = [[[0 for j in range(dim)] for l in range(dim)] for i in range(dim)]
-
-    for i in range(dim):
-        for l in range(dim):
-            for j in range(dim):
-                gamma[i][l][j] = upper_connection_coefficients(i, l, j, g, c, mu_range = mu_range, g_inv = g_inv)
-                # mu_range -> dim にかえる
-    return gamma
-
-def connection_one_forms(solution, gamma, dim=dim):
-    omega = [[0 for j in range(dim)] for i in range(dim)]
-    for i in range(dim):
-        for j in range(dim):
-            omega[i][j] = sum(gamma[i][l][j] * solution.omega_forms()[l] for l in range(dim))
-            show(omega[i][j].display())
-    return omega
+import time
+t0 = time.time()
 # Instantiate and use the class
-# solution = TypeB_plus(chart=chart)
-solution = TypeC_plus(chart=chart)
+solution = TypeB_plus(chart=chart)
+# solution = TypeC_plus(chart=chart)
 # solution = TypeD(chart=chart)
 
 # Create a row vector of vector fields
-part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
-orthonormal_basis = solution.compute_orthonormal_basis()
-# show_commutator(orthonormal_basis)
+# part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
 
-# g = solution.metric()
-# show(g.display())
-eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
-g = eta
-c = compute_structure_tensor(orthonormal_basis)
-gamma = all_upper_coefficients(g, c, g_inv = "eta")
-#show(gamma)
-omega = connection_one_forms(solution, gamma)
-
-# tetrads = solution.omega_forms()
-# # Display the tetrads and their exterior derivatives
-# for x in tetrads:
-#     print(x.display())
-#     show(x.exterior_derivative().display())
-#     print(latex(diff(x).display()))
+LHS = calculate_einstein_tensor(solution)
+RHS = 2 * calculate_energy_momentum(solution)
+eq = LHS - RHS
+# show_two_tensor(Einstein_tensor, dim, array=False)
+# show_two_tensor(four_pi_T, dim, array=False)
+show_two_tensor(eq, dim, array=False, Mathematica=True)
