@@ -253,6 +253,9 @@ def scalar_curvature(Ric, g_inv, dim=dim):
 
 # print 
 def show_two_tensor(tensor, dim, array=True, Mathematica=False, result="result.txt"):
+    if Mathematica:
+        with open(result, "w") as f:
+            f.write("# Open Result")
     for i in range(dim):
         for j in range(dim):
             # if i < j:
