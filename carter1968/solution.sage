@@ -6,10 +6,14 @@ chart = M.chart(r'lambda_ mu psi chi')
 symbolic = 'f'
 f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
 
+# Create a row vector of vector fields
+# part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
+
 var('Lambda e h')
 m1, m2 = var('m1 m2')
 n1, n2 = var('n1 n2')
 e1, e2 = var('e1 e2')
+n = var('n')
 
 class CarterSolution:
     def __init__(self, chart):
@@ -138,10 +142,10 @@ class CarterSolution:
         basis = self.compute_orthonormal_basis()
         com = commutator_field(basis, i, j)
         E = self.E_hat()
-        n = len(basis)
-        cs = [0 for _ in range(n)]
-        for k in range(n):
-            cs[k] = sum(com[a] * E[k][a] for a in range(n))
+        dim = len(basis)
+        cs = [0 for _ in range(dim)]
+        for k in range(dim):
+            cs[k] = sum(com[a] * E[k][a] for a in range(dim))
         return cs
 
     def compute_structure_coefficients(self, dim=dim):
@@ -227,7 +231,30 @@ class CarterSolution:
         self.show_latex()
 
 class TypeA(CarterSolution):
+    def Delta_lambda(self):
+        lamda = self.chart[0]
+        x = Lambda * lamda**4 / 3 + h * lamda**2 - 2 * m1 * lamda + n + e**2
+        return x
     
+    def Delta_mu(self):
+        mu = self.chart[1]
+        x = Lambda * mu**4 / 3 - (h * mu**2 - 2 * m2 * mu - n)
+        return x
+
+    def P_lambda(self):
+        lamda = self.chart[0]
+        return lamda**2
+
+    def P_mu(self):
+        mu = self.chart[1]
+        return - mu**2  
+
+    def Q_lambda(self):
+        return 1
+    
+    def Q_mu(self):
+        return 1
+
 class TypeB_plus(CarterSolution):
     def Delta_lambda(self):
         lamda = self.chart[0]
@@ -243,7 +270,7 @@ class TypeB_plus(CarterSolution):
     
     def P_mu(self):
         mu = self.chart[1]
-        return 2 * mu
+        return - 2 * mu
 
     def Q_lambda(self):
         return 0
@@ -252,8 +279,6 @@ class TypeB_plus(CarterSolution):
         return 1
 
 class TypeC_plus(CarterSolution):
-    n = var('n')
-        
     def Delta_lambda(self):
         lamda = self.chart[0]
         return Lambda * (lamda**4) / 3 + (h * (lamda**2) - 2 * m1 * lamda + e**2)# 20250514 one third added
@@ -341,12 +366,10 @@ def calculate_einstein_tensor(solution, cosmological = True):
 import time
 t0 = time.time()
 # Instantiate and use the class
-solution = TypeB_plus(chart=chart)
+solution = TypeA(chart=chart)
+# solution = TypeB_plus(chart=chart)
 # solution = TypeC_plus(chart=chart)
 # solution = TypeD(chart=chart)
-
-# Create a row vector of vector fields
-# part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
 
 LHS = calculate_einstein_tensor(solution)
 RHS = 2 * calculate_energy_momentum(solution)
