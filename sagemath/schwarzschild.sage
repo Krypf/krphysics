@@ -135,7 +135,7 @@ metric = g_S = spacetime.metric_tensor()
 basis = es = spacetime.ortho_normal_frame()
 forms = fs = spacetime.ortho_normal_tetrads()
 
-eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
+eta = metric_minkowski = - diagonal_matrix([- 1, 1, 1, 1])# 0 component is negative.
 c = spacetime.compute_structure_coefficients()
 gamma = all_upper_coefficients(eta, c, g_inv = "eta", manifold = spacetime.neighborhood)
 Riem = Riemannian_curvature(basis, gamma, c, dim=dim)

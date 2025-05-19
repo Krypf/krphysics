@@ -21,20 +21,20 @@ def show_commutators(basis):
 
 # another form of functions for commutator algebra
 
-def commutator_symbol(basis, i, j, f_sym = f_sym):
+def commutator_symbol(basis, i, j, f_sym):
     a = basis[i](basis[j](f_sym)) - basis[j](basis[i](f_sym))
     return a
 
-def structure_constants(basis, i, j, chart=chart, f_sym=f_sym):
+def structure_constants(basis, i, j, chart, f_sym):
     # Compute the commutator vector field
-    x = commutator_symbol(basis, i, j)
+    x = commutator_symbol(basis, i, j, f_sym)
     x_expr = x.expr()
     coeffs = []
     for k in range(dim):
         coeffs.append(x_expr.coefficient(diff(f_sym.expr(), chart[k])))
     return (coeffs)
 
-def compute_structure_tensor(basis, dim=dim, chart=chart, f_sym=f_sym):
+def compute_structure_tensor(basis, chart, f_sym, dim=dim):
     """
     Computes the full structure constants tensor c[k][i][j],
     where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
@@ -54,7 +54,7 @@ def compute_structure_tensor(basis, dim=dim, chart=chart, f_sym=f_sym):
 
     for i in range(dim):
         for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
-            coeffs = structure_constants(basis, i, j)
+            coeffs = structure_constants(basis, i, j, chart, f_sym)
             for k in range(dim):
                 c[k][i][j] = coeffs[k]
                 c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
