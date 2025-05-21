@@ -1,3 +1,57 @@
+_dim = 4
+
+class Spacetime:
+    def __init__(self,
+        manifold = Manifold(_dim, 'manifold'),
+        ):
+        # Define the manifold
+        self.manifold = manifold
+    def structure_coefficients_tetrad(self, i, j):
+        basis = self.ortho_normal_frame()
+        com = commutator_field(basis, i, j)
+        E = self.E_hat()
+        n = len(basis)
+        cs = [0 for _ in range(n)]
+        for k in range(n):
+            cs[k] = sum(com[a] * E[k][a] for a in range(n))
+        return cs
+
+    def compute_structure_coefficients(self, dim=_dim):
+        """
+        Computes the full structure constants tensor c[k][i][j],
+        where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
+
+        Parameters:
+        - dim: dimension of the space
+        - basis: basis to be used for commutators
+
+        Returns:
+        - c: a 3D list [k][i][j] representing c^k_{ij}
+        """
+        # Initialize 3D list with zeros
+        c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
+
+        for i in range(dim):
+            for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
+                coeffs = self.structure_coefficients_tetrad(i, j)
+                for k in range(dim):
+                    c[k][i][j] = coeffs[k]
+                    c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
+        return c
+
+    def compute_curvatures(self, basis, metric, structure, g_inv = "eta", dim=_dim, domain = None):
+        g = metric
+        c = structure
+
+        gamma = all_upper_coefficients(g, c, dim=_dim, g_inv = g_inv, domain = domain)
+        Riem = Riemannian_curvature(basis, gamma, c, dim=_dim)
+        # t1= time.time(); print(t1 - t0);
+        Ric = Ricci_tensor(Riem, dim=_dim)
+        # show(show_two_tensor(Ric, dim))
+        R = scalar_curvature(Ric, metric, dim=_dim)
+        # t1= time.time(); print(t1 - t0);
+        return Riem, Ric, R
+
 def show_vectors(vectors):
     print("Show vectors")
     for v in vectors:
@@ -13,11 +67,12 @@ def commutator_field(basis, i, j):
 
 def show_commutators(basis):
     n = len(basis)
-    print(f"Commutators of a basis {basis}")
+    print("Commutators of a basis.")
     for i in range(n):
         for j in range(n):
             if i < j:
                 print((i, j), basis[i].bracket(basis[j]).display())
+                print(f"[{basis[i]}, {basis[j]}]")
 
 # another form of functions for commutator algebra
 
@@ -34,7 +89,7 @@ def structure_constants(basis, i, j, chart, f_sym):
         coeffs.append(x_expr.coefficient(diff(f_sym.expr(), chart[k])))
     return (coeffs)
 
-def compute_structure_tensor(basis, chart, f_sym, dim=dim):
+def compute_structure_tensor(basis, chart, f_sym, dim=_dim):
     """
     Computes the full structure constants tensor c[k][i][j],
     where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
@@ -113,6 +168,7 @@ def lower_connection_term(i, L, j, metric, basis, forms, gauge = ""):
         for mu in range(dim)
         )
     return _ans
+
 def lower_connection_coefficient(i, j, metric = None, basis = None, forms = None, gauge = ""):
     
     if metric is None | basis is None | forms is None:
@@ -152,8 +208,7 @@ def show_first_christoffel_symbols(metric, basis):
     return 0
 
 # form solution.sage
-dim = 4
-def lower_connection_coefficients(i, l, j, g, c, dim = dim):
+def lower_connection_coefficients(i, l, j, g, c, dim=_dim):
     """
     Computes the sum over mu of:
     gamma_(i, l, j) = 1/2 * (g_{i mu} * c^mu_{l j} - g_{j mu} * c^mu_{l i} + g_{l mu} * c^mu_{i j})
@@ -173,7 +228,7 @@ def lower_connection_coefficients(i, l, j, g, c, dim = dim):
         for mu in range(dim)
     )
 
-def upper_connection_coefficients(i, l, j, g, c, dim = dim, g_inv = None):
+def upper_connection_coefficients(i, l, j, g, c, dim=_dim, g_inv = None):
     """
     gamma^{i}_(l, j) = sum of g^{i a} gamma_(a, l, j)
     """
@@ -181,23 +236,23 @@ def upper_connection_coefficients(i, l, j, g, c, dim = dim, g_inv = None):
         g_inv = g
     
     return sum(
-        g_inv[i][a] * lower_connection_coefficients(a, l, j, g, c, dim = dim)
+        g_inv[i][a] * lower_connection_coefficients(a, l, j, g, c, dim=_dim)
         for a in range(dim)
     )
 
-def all_upper_coefficients(g, c, dim = dim, g_inv = None, manifold = None):
+def all_upper_coefficients(g, c, dim=_dim, g_inv = None, domain = None):
     # Initialize 3D list with zeros
     gamma = [[[0 for j in range(dim)] for l in range(dim)] for i in range(dim)]
 
     for i in range(dim):
         for l in range(dim):
             for j in range(dim):
-                x = upper_connection_coefficients(i, l, j, g, c, dim = dim, g_inv = g_inv)
-                gamma[i][l][j] = manifold.scalar_field(x)
+                x = upper_connection_coefficients(i, l, j, g, c, dim=_dim, g_inv = g_inv)
+                gamma[i][l][j] = domain.scalar_field(x)
 
     return gamma
 
-def connection_one_forms(solution, gamma, dim=dim):
+def connection_one_forms(solution, gamma, dim=_dim):
     omega = [[0 for j in range(dim)] for i in range(dim)]
     for i in range(dim):
         for j in range(dim):
@@ -205,7 +260,7 @@ def connection_one_forms(solution, gamma, dim=dim):
             show(omega[i][j].display())
     return omega
 
-def Riemannian_curvature_component(basis, gamma, c, i, j, k, l, dim=dim):
+def Riemannian_curvature_component(basis, gamma, c, i, j, k, l, dim=_dim):
     # term1: e_k (gamma ^i_{lj}) + gamma ^μ_{lj} gamma ^i_{kμ}
     term1 = basis[k](gamma[i][l][j]) + sum(gamma[mu][l][j] * gamma[i][k][mu] for mu in range(dim))
     
@@ -217,33 +272,33 @@ def Riemannian_curvature_component(basis, gamma, c, i, j, k, l, dim=dim):
     
     return term1 + term2 + term3
 
-def Riemannian_curvature(basis, gamma, c, dim=dim):
+def Riemannian_curvature(basis, gamma, c, dim=_dim):
     # Create a 4D zero array
     Riemann = [[[[0 for l in range(dim)] for k in range(dim)] for j in range(dim)] for i in range(dim)]
     for i in range(dim):
         for j in range(dim):
             for k in range(dim):
                 for l in range(k+1, dim):  # k < l only, then fill antisymmetric part
-                    x = Riemannian_curvature_component(basis, gamma, c, i, j, k, l, dim=dim)
+                    x = Riemannian_curvature_component(basis, gamma, c, i, j, k, l, dim=_dim)
                     Riemann[i][j][k][l] = x
                     Riemann[i][j][l][k] = -x
     return Riemann
 
-def Ricci_tensor_component(Riem, i, j, dim=dim):
+def Ricci_tensor_component(Riem, i, j, dim=_dim):
     Ric = 0
     for mu in range(dim):
         Ric += Riem[mu][i][mu][j]
     return Ric
 
-def Ricci_tensor(Riem, dim=dim):
+def Ricci_tensor(Riem, dim=_dim):
     Ric = [[0 for j in range(dim)] for i in range(dim)]
     for i in range(dim):
         for j in range(i, dim):  # i <= j only, then fill antisymmetric part
-            Ric[i][j] = Ricci_tensor_component(Riem, i, j, dim=dim)
+            Ric[i][j] = Ricci_tensor_component(Riem, i, j, dim=_dim)
             Ric[j][i] = Ric[i][j]
     return Ric
 
-def scalar_curvature(Ric, g_inv, dim=dim):
+def scalar_curvature(Ric, g_inv, dim=_dim):
     R = 0
     for i in range(dim):
         for j in range(dim):
