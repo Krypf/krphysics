@@ -63,15 +63,16 @@ class Spacetime():
                     c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
         return c
 
-    def compute_curvatures(self, frame, metric, structure, g_inv = "eta", dim=_dim, domain = None):
+    def compute_curvatures(self, frame, metric, structure, g_inv = "eta", domain = None):
+        _dim = self.dimension
         g = metric
         c = structure
 
-        gamma = all_upper_coefficients(g, c, dim=_dim, g_inv = g_inv, domain = domain)
-        Riem = Riemannian_curvature(frame, gamma, c, dim=_dim)
+        gamma = all_upper_coefficients(g, c, g_inv = g_inv, domain = domain)
+        Riem = Riemannian_curvature(frame, gamma, c)
         # t1= time.time(); print(t1 - t0);
-        Ric = Ricci_tensor(Riem, dim=_dim)
+        Ric = Ricci_tensor(Riem)
         # show(show_two_tensor(Ric, dim))
-        R = scalar_curvature(Ric, metric, dim=_dim)
+        R = scalar_curvature(Ric, metric)
         # t1= time.time(); print(t1 - t0);
         return Riem, Ric, R
