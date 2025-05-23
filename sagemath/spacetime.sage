@@ -24,7 +24,7 @@ class Spacetime():
         if partials is None:
             partials = self.chart.frame()
 
-        yo = self.E_inv()
+        yo = self.E_inv() # katakana letter ﾖ
         n = self.dimension
         for j in range(n):
             vec = sum(partials[i] * yo[i, j] for i in range(n))
@@ -64,15 +64,23 @@ class Spacetime():
         return c
 
     def compute_curvatures(self, frame, metric, structure, g_inv = "eta", domain = None):
+        t0 = time.time()
         _dim = self.dimension
         g = metric
         c = structure
-
         gamma = all_upper_coefficients(g, c, g_inv = g_inv, domain = domain)
+
+        print("Calculating the Riemannian_curvature... ")
         Riem = Riemannian_curvature(frame, gamma, c)
-        # t1= time.time(); print(t1 - t0);
+        t1 = time.time(); print(f"in {t1 - t0} seconds");
+        show_four_tensor(Riem, _dim)
+
+        print("Calculating the Ricci_tensor and the scalar_curvature... ")
         Ric = Ricci_tensor(Riem)
-        # show(show_two_tensor(Ric, dim))
+        
         R = scalar_curvature(Ric, metric)
-        # t1= time.time(); print(t1 - t0);
+        t2 = time.time(); print(f"in {t2 - t1} seconds");
+        show(show_two_tensor(Ric, _dim))
+        show(R.display())
+
         return Riem, Ric, R
