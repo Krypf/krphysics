@@ -11,6 +11,7 @@ class CarterSolution(Spacetime):
     def __init__(self, manifold):
         super().__init__(manifold)
         self.chart = self.manifold.chart(r'lambda_ mu psi chi')
+        self.sign_matrix = diagonal_matrix([1, 1, 1, -1]) # Minkowski metric
     
     def Delta_lambda(self):
         raise NotImplementedError("Subclasses must implement Delta_lambda")
@@ -50,21 +51,21 @@ class CarterSolution(Spacetime):
 
     def omega_forms(self):
         Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
-
+        X = self.chart.frame()
         # Define the 1-forms
         omega_p1 = M.diff_form(1, name='omega^{+1}')
-        omega_p1.set_comp(chart.frame())[0] = sqrt(Z / Delta_lambda)  # lambda_ component
+        omega_p1.set_comp(X)[0] = sqrt(Z / Delta_lambda)  # lambda_ component
 
         omega_m1 = M.diff_form(1, name='omega^{-1}')
-        omega_m1.set_comp(chart.frame())[1] = sqrt(Z / Delta_mu)  # mu component
+        omega_m1.set_comp(X)[1] = sqrt(Z / Delta_mu)  # mu component
 
         omega_p2 = M.diff_form(1, name='omega^{+2}')
-        omega_p2.set_comp(chart.frame())[2] = (sqrt(Z * Delta_mu) / Z) * P_lambda  # psi component
-        omega_p2.set_comp(chart.frame())[3] = -(sqrt(Z * Delta_mu) / Z) * Q_lambda  # chi component
+        omega_p2.set_comp(X)[2] = (sqrt(Z * Delta_mu) / Z) * P_lambda  # psi component
+        omega_p2.set_comp(X)[3] = -(sqrt(Z * Delta_mu) / Z) * Q_lambda  # chi component
 
         omega_m2 = M.diff_form(1, name='omega^{-2}')
-        omega_m2.set_comp(chart.frame())[2] = (sqrt(Z * Delta_lambda) / Z) * P_mu  # psi component
-        omega_m2.set_comp(chart.frame())[3] = -(sqrt(Z * Delta_lambda) / Z) * Q_mu  # chi component
+        omega_m2.set_comp(X)[2] = (sqrt(Z * Delta_lambda) / Z) * P_mu  # psi component
+        omega_m2.set_comp(X)[3] = -(sqrt(Z * Delta_lambda) / Z) * Q_mu  # chi component
 
         return [omega_p1, omega_m1, omega_p2, omega_m2]
     
@@ -133,11 +134,21 @@ class CarterSolution(Spacetime):
         return field_strength
 
     def energy_momentum_tensor(self, g, g_inv):
+        print("Returns the energy momentum tensor...")
         field_strength = self.field_strength_tetrad()
         F = matrix(field_strength)
         trace_term = 1 / 4 * (F.transpose() * g_inv * F * g_inv).trace() * g # not / 4
         four_pi_T = F * g_inv * F.transpose() - trace_term
         # multiplied by 4 \pi
+        return four_pi_T
+
+    def calculate_energy_momentum(self):
+        potential = self.elemag_potential()
+        F = self.field_strength_coord()
+        # field_strength = self.field_strength_tetrad()
+        eta = self.sign_matrix
+        four_pi_T = self.energy_momentum_tensor(eta, eta)
+        # show(2 * four_pi_T)
         return four_pi_T
 
     def show(self):
@@ -260,46 +271,37 @@ class TypeD(CarterSolution):
     def Q_mu(self):
         return 1
 
-def show_derivative(solution):
-    # Display the tetrads and their exterior derivatives
-    tetrads = solution.omega_forms()
-    for x in tetrads:
-        print(x.display())
-        show(x.exterior_derivative().display())
+# Define the 4-dimensional manifold with coordinates
+_dim = 4
+M = Manifold(_dim, 'M', structure='differentiable')
+# Instantiate and use the class
+#solution = TypeA(M)
+# solution = TypeB_plus(M)
+# solution = TypeC_plus(M)
+solution = TypeD(M)
 
-def calculate_energy_momentum(solution):
-    potential = solution.elemag_potential()
-    # print(potential.display())
-    F = solution.field_strength_coord()
-    # field_strength = solution.field_strength_tetrad()
-    eta = diagonal_matrix([1, 1, 1, -1])
-    four_pi_T = solution.energy_momentum_tensor(eta, eta)
-    show(2 * four_pi_T)
-    return four_pi_T
-
-def calculate_einstein_tensor(solution, cosmological = True):
-    t0 = time.time()
-    frame = solution.compute_orthonormal_frame(chart=solution.chart)# show_commutator(frame)
-    # g = solution.metric_tensor() # show(g.display())
-    # omega = connection_one_forms(solution, gamma)
-    eta = diagonal_matrix([1, 1, 1, -1]) # Minkowski metric
-    g = eta
+def main(solution):
+    print(solution)
+    frame = solution.compute_orthonormal_frame(chart=solution.chart)
     c = solution.compute_structure_coefficients(frame)
+    g = eta = solution.sign_matrix
 
-    gamma = all_upper_coefficients(g, c, g_inv = "eta", domain = M)
-    Riem = Riemannian_curvature(frame, gamma, c)
-    t1= time.time(); print(t1 - t0);
-    Ric = Ricci_tensor(Riem)
-    # show(show_two_tensor(Ric, _dim))
-    R = scalar_curvature(Ric, eta)
-    t2= time.time(); print(t2 - t1);
-    Einstein_tensor = matrix(Ric) - 1 / 2 * R * g
-    # show_two_tensor(Einstein_tensor, _dim, array=False)
-    if cosmological:
-        LHS = Einstein_tensor - (Lambda * g)
-        return LHS
-    return Einstein_tensor
+    Riem, Ric, R = solution.compute_curvatures(frame, g, c, g_inv = "eta", domain = M)
+    LHS = calculate_einstein_tensor(Ric, R, g)
+    RHS = 2 * calculate_energy_momentum(solution)
+    eq = LHS - RHS
+    print("LHS = ")
+    show_two_tensor(LHS, _dim, array=False)
+    print("RHS = ")
+    show_two_tensor(RHS, _dim, array=False)
+    print("LHS - RHS = ")
+    show_two_tensor(eq, _dim, array=False, Mathematica=False)
+    return 0
 
+main(solution)
+print(0)
+
+# memo
 
 # symbolic = 'f'
 # f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
@@ -307,23 +309,6 @@ def calculate_einstein_tensor(solution, cosmological = True):
 # Create a row vector of vector fields
 # part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
 
-# Define the 4-dimensional manifold with coordinates
-_dim = 4
-M = Manifold(_dim, 'M', structure='differentiable')
-# Instantiate and use the class
-# solution = TypeA(chart=chart)
-# solution = TypeB_plus(chart=chart)
-# solution = TypeC_plus(chart=chart)
-solution = TypeD(M)
-
-def main(solution):
-    LHS = calculate_einstein_tensor(solution)
-    RHS = 2 * calculate_energy_momentum(solution)
-    eq = LHS - RHS
-    # show_two_tensor(Einstein_tensor, _dim, array=False)
-    # show_two_tensor(four_pi_T, _dim, array=False)
-    show_two_tensor(eq, _dim, array=False, Mathematica=False)
-    return 0
-
-main(solution)
-print(0)
+# show_commutator(frame)
+# g = solution.metric_tensor() # show(g.display())
+# omega = solution.connection_one_forms(gamma)
