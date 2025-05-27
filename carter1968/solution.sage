@@ -1,13 +1,5 @@
+import time
 load("~/krphysics/sagemath/geometry.sage")
-# Define the 4-dimensional manifold with coordinates
-dim = 4
-M = Manifold(dim, 'M', structure='differentiable')
-chart = M.chart(r'lambda_ mu psi chi')
-symbolic = 'f'
-f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
-
-# Create a row vector of vector fields
-# part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
 
 var('Lambda e h')
 m1, m2 = var('m1 m2')
@@ -15,9 +7,10 @@ n1, n2 = var('n1 n2')
 e1, e2 = var('e1 e2')
 n = var('n')
 
-class CarterSolution:
-    def __init__(self, chart):
-        self.chart = chart
+class CarterSolution(Spacetime):
+    def __init__(self, manifold):
+        super().__init__(manifold)
+        self.chart = self.manifold.chart(r'lambda_ mu psi chi')
     
     def Delta_lambda(self):
         raise NotImplementedError("Subclasses must implement Delta_lambda")
@@ -75,14 +68,9 @@ class CarterSolution:
 
         return [omega_p1, omega_m1, omega_p2, omega_m2]
     
-    def metric(self):
+    def metric_tensor(self):
         """ Calculate the metric ds^2 """
-        M = self.chart.domain()
-        g = M.metric(name="g")  # metric tensor g_ij
-
-        # 座標変数
-        # lambda_, mu, psi, chi = self.chart._first, self.chart._second, self.chart._third, self.chart._fourth
-
+        g = self.manifold.metric(name="g")  # metric tensor g_ij
         Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
 
         g[0, 0] = Z / Delta_lambda  # coefficient of dλ² 
@@ -120,73 +108,23 @@ class CarterSolution:
             [0, 0, P_mu/sqrt(Z * Delta_mu), -P_lambda/sqrt(Z * Delta_lambda)]
         ])
 
-    def compute_orthonormal_basis(self, _show = False):
-        """
-        Computes and displays the transformed vector fields forming an orthonormal basis.
-        
-        Parameters:
-            self.chart: The chart or manifold coordinate frame (with .frame() method)
-            self = solution: An object with an .E_inv() method 
-        Returns:
-            List of vector fields forming an orthonormal basis.
-        """
-        orthonormal_basis = []
-        for j in range(dim):
-            vec = sum(self.chart.frame()[i] * self.E_inv()[i, j] for i in range(dim))
-            orthonormal_basis.append(vec)
-            if _show:
-                show(vec.display())
-        return orthonormal_basis
-
-    def structure_tetrad(self, i, j):
-        basis = self.compute_orthonormal_basis()
-        com = commutator_field(basis, i, j)
-        E = self.E_hat()
-        dim = len(basis)
-        cs = [0 for _ in range(dim)]
-        for k in range(dim):
-            cs[k] = sum(com[a] * E[k][a] for a in range(dim))
-        return cs
-
-    def compute_structure_coefficients(self, dim=dim):
-        """
-        Computes the full structure constants tensor c[k][i][j],
-        where c^k_{ij} satisfies c^k_{ji} = -c^k_{ij} (antisymmetry).
-
-        Parameters:
-        - dim: dimension of the space
-        - basis: basis to be used for commutators
-
-        Returns:
-        - c: a 3D list [k][i][j] representing c^k_{ij}
-        """
-        # Initialize 3D list with zeros
-        c = [[[0 for j in range(dim)] for i in range(dim)] for k in range(dim)]
-
-        for i in range(dim):
-            for j in range(i+1, dim):  # i < j only, then fill antisymmetric part
-                coeffs = self.structure_tetrad(i, j)
-                for k in range(dim):
-                    c[k][i][j] = coeffs[k]
-                    c[k][j][i] = -coeffs[k]  # antisymmetry enforced here
-        return c
-
     def elemag_potential(self):
         Z, Delta_lambda, Delta_mu, P_lambda, P_mu, Q_lambda, Q_mu = self.get_parameters() 
         X_lambda = e1 * self.chart[0]
         X_mu = e2 * self.chart[1]
 
-        A = M.diff_form(1, name='potential')
-        A.set_comp(chart.frame())[2] = (P_lambda * X_mu + P_mu * X_lambda) / Z # d_psi
-        A.set_comp(chart.frame())[3] = - (Q_lambda * X_mu + Q_mu * X_lambda) / Z # d_chi
+        A = self.manifold.diff_form(1, name='potential')
+        A.set_comp(self.chart.frame())[2] = (P_lambda * X_mu + P_mu * X_lambda) / Z # d_psi
+        A.set_comp(self.chart.frame())[3] = - (Q_lambda * X_mu + Q_mu * X_lambda) / Z # d_chi
         return A
+
     def field_strength_coord(self):
         A = self.elemag_potential()
         F = A.exterior_derivative().components()
         return F
     def field_strength_tetrad(self):
         Einv = self.E_inv() # coordinates to tetrads
-        N = dim
+        N = self.dimension
         F = self.field_strength_coord()
         field_strength = [[0 for j in range(N)] for i in range(N)]
         for i in range(N):
@@ -197,8 +135,6 @@ class CarterSolution:
     def energy_momentum_tensor(self, g, g_inv):
         field_strength = self.field_strength_tetrad()
         F = matrix(field_strength)
-        # g = self.metric()
-        # g_inv = (metric_matrix).inv()
         trace_term = 1 / 4 * (F.transpose() * g_inv * F * g_inv).trace() * g # not / 4
         four_pi_T = F * g_inv * F.transpose() - trace_term
         # multiplied by 4 \pi
@@ -270,7 +206,7 @@ class TypeB_plus(CarterSolution):
     
     def P_mu(self):
         mu = self.chart[1]
-        return - 2 * mu
+        return 0 # + 2 * mu
 
     def Q_lambda(self):
         return 0
@@ -342,38 +278,52 @@ def calculate_energy_momentum(solution):
     return four_pi_T
 
 def calculate_einstein_tensor(solution, cosmological = True):
-    orthonormal_basis = solution.compute_orthonormal_basis()# show_commutator(orthonormal_basis)
-    # g = solution.metric() # show(g.display())
+    t0 = time.time()
+    frame = solution.compute_orthonormal_frame(chart=solution.chart)# show_commutator(frame)
+    # g = solution.metric_tensor() # show(g.display())
     # omega = connection_one_forms(solution, gamma)
-    eta = metric_minkowski = diagonal_matrix([1, 1, 1, -1])
+    eta = diagonal_matrix([1, 1, 1, -1]) # Minkowski metric
     g = eta
-    c = solution.compute_structure_coefficients()
-    # c2 = compute_structure_tensor(orthonormal_basis)
-    gamma = all_upper_coefficients(g, c, g_inv = "eta", manifold = M)
-    Riem = Riemannian_curvature(orthonormal_basis, gamma, c, dim=dim)
+    c = solution.compute_structure_coefficients(frame)
+
+    gamma = all_upper_coefficients(g, c, g_inv = "eta", domain = M)
+    Riem = Riemannian_curvature(frame, gamma, c)
     t1= time.time(); print(t1 - t0);
     Ric = Ricci_tensor(Riem)
-    # show(show_two_tensor(Ric, dim))
+    # show(show_two_tensor(Ric, _dim))
     R = scalar_curvature(Ric, eta)
-    t1= time.time(); print(t1 - t0);
+    t2= time.time(); print(t2 - t1);
     Einstein_tensor = matrix(Ric) - 1 / 2 * R * g
-    # show_two_tensor(Einstein_tensor, dim, array=False)
+    # show_two_tensor(Einstein_tensor, _dim, array=False)
     if cosmological:
         LHS = Einstein_tensor - (Lambda * g)
         return LHS
     return Einstein_tensor
 
-import time
-t0 = time.time()
+
+# symbolic = 'f'
+# f_sym = M.scalar_field(function(symbolic)(*chart), name=symbolic)# symbolic function
+
+# Create a row vector of vector fields
+# part_lambda, part_mu, part_psi, part_chi = chart.frame()  # coordinate vector fields
+
+# Define the 4-dimensional manifold with coordinates
+_dim = 4
+M = Manifold(_dim, 'M', structure='differentiable')
 # Instantiate and use the class
-solution = TypeA(chart=chart)
+# solution = TypeA(chart=chart)
 # solution = TypeB_plus(chart=chart)
 # solution = TypeC_plus(chart=chart)
-# solution = TypeD(chart=chart)
+solution = TypeD(M)
 
-LHS = calculate_einstein_tensor(solution)
-RHS = 2 * calculate_energy_momentum(solution)
-eq = LHS - RHS
-# show_two_tensor(Einstein_tensor, dim, array=False)
-# show_two_tensor(four_pi_T, dim, array=False)
-show_two_tensor(eq, dim, array=False, Mathematica=True)
+def main(solution):
+    LHS = calculate_einstein_tensor(solution)
+    RHS = 2 * calculate_energy_momentum(solution)
+    eq = LHS - RHS
+    # show_two_tensor(Einstein_tensor, _dim, array=False)
+    # show_two_tensor(four_pi_T, _dim, array=False)
+    show_two_tensor(eq, _dim, array=False, Mathematica=False)
+    return 0
+
+main(solution)
+print(0)
