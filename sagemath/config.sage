@@ -23,6 +23,12 @@ def show_commutators(basis):
                 print((i, j), com.display())
                 print(f"[{basis[i]}, {basis[j]}]")
 
+def show_lower_christoffel(metric, frame, forms):
+    N = len(frame)
+    for i in range(N):  # Loop over all i, j, mu
+        for L in range(N):
+            for j in range(N):
+                print(lower_connection_term(i, L, j, metric, frame, forms).display())
 # print tensors
 def show_two_tensor(tensor, dim, array=True, Mathematica=False, result="result.txt"):
     if Mathematica:
@@ -55,3 +61,4 @@ def show_four_tensor(Riem, dim):
                     if component != 0:
                         show(i, j, k, l)
                         show(component.display())
+    return 0
