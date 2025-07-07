@@ -1,7 +1,7 @@
 module RelativityTools
 
 include("Metrics.jl")
-export SchwarzschildMetric
+export SchwarzschildMetric, polar, myreplace, metric_value, metric_test
 include("Accels.jl")
 export AccelSchwarzschild, AccelKerr
 include("RKS.jl")
