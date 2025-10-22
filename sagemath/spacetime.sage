@@ -11,6 +11,12 @@ class Spacetime():
     def metric_tensor(self):
         raise NotImplementedError("Spacetime must implement metric")
     
+    def E_hat(self):
+        raise NotImplementedError("E_hat must implement metric")
+    
+    def E_inv(self):
+        raise NotImplementedError("E_inv must implement metric")
+    
     def compute_orthonormal_frame(self, chart = None, partials = None, _show = False):
         """
         Computes and displays the transformed vector fields forming an orthonormal frame.
@@ -120,6 +126,7 @@ class Spacetime():
         return Riem, Ric, R
 
 class Minkowski(Spacetime):
+    var('c')
     def __init__(self, manifold,
         args_name = 'x',
         neighborhood_name = 'U',
@@ -129,12 +136,57 @@ class Minkowski(Spacetime):
         super().__init__(manifold)
         self.args_name = ' '.join([f'{args_name}{i}' for i in range(self.dimension)])
         self.args = var(self.args_name)
+        self.chart = self.manifold.chart(self.args_name)
 
         self.neighborhood = manifold.open_subset(neighborhood_name) # = U
         self.sign_matrix = (- eta00) * diagonal_matrix([- 1, 1, 1, 1]) # Minkowski metric # 0 component is negative.
 
-M = Manifold(4, 'Minkowski')
-spacetime = Minkowski(M)
+    def metric_tensor(self):
+        _frame = self.chart.frame()
+        n = self.dimension
+        eta = M.metric('eta', signature=(n-1, 1, 0))
+        for i in range(n):
+            eta[_frame, i, i] = self.sign_matrix[i, i]
+        return eta
+
+    def electromagnetic(self):
+        dom = self.chart.domain()
+        F = dom.diff_form(2)
+        x = self.chart
+        E = [function('E1')(*x), function('E2')(*x), function('E3')(*x)]
+        for i in range(1, 3+1):
+            F[i,0] = E[i-1] / c
+        # B = [function('B1')(*x), function('B2')(*x), function('B3')(*x)]
+        F[1,2] = function('B12')(*x) # B[3-1]  # dx∧dy
+        F[2,3] = function('B23')(*x) # B[1-1]  # dy∧dz
+        F[3,1] = function('B31')(*x) # B[2-1]  # dz∧dx
+        return F     
+    def excitation(self):
+        dom = self.chart.domain()
+        exc = dom.diff_form(2)
+        x = self.chart
+        H = [function('H1')(*x), function('H2')(*x), function('H3')(*x)]
+        for i in range(1, 3+1):
+            exc[i,0] = - H[i-1] / c # magnetic field
+            # with the minus sign
+        # D = [function('E1')(*x), function('E2')(*x), function('E3')(*x)]
+        exc[1,2] = function('D12')(*x) # D[3-1] # dx∧dy
+        exc[2,3] = function('D23')(*x) # D[1-1] # dy∧dz
+        exc[3,1] = function('D31')(*x) # D[2-1] # dz∧dx
+        return exc     
+
+n = 3
+M = Manifold(n, 'Minkowski', structure='Lorentzian')
+Min = Minkowski(M)
+F = Min.electromagnetic()
+eta = Min.metric_tensor()
+F_star = F.hodge_dual(eta, minus_eigenvalues_convention=True)
+# print(F_star.display())
+exc = Min.excitation()
+# L_density = - F.wedge(F_star)
+L_density = - F.wedge(exc)
+print(L_density.display())
+# not good: print(F.hodge_dual(eta).display())
 N = Manifold(3, 'de Sitter', ambient=M)
 # class EuclidSpace(Spacetime):
-    
+# F.hodge_dual(eta).hodge_dual(eta).display()
