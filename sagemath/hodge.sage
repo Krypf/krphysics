@@ -1,43 +1,4 @@
 load("spacetime.sage")
-dd = Min.chart.coframe()
-d0 = dd[0]
-d1 = dd[1]
-d2 = dd[2]
-d3 = dd[3]
-pp = Min.chart.frame()
-p0 = pp[0]
-
-# a = d0.hodge_dual(eta, minus_eigenvalues_convention=True)
-# print(a.display())
-
-# eps = eta.volume_form()
-# x = eps.contract(p0,0)
-# y = x.down(eta)
-# z = p0.contract(eta,0)
-# print(y.display())
-
-# # eps.interior_product(del0).display()
-# def hodge_dual(form, frame, metric):
-#     eps = metric.volume_form()
-#     p = form.degree()
-#     x = eps.contract(frame[0]).down(metric)
-#     return x
-
-
-
-def hodge_dual_one_form(one_form, frame, metric):
-    eps = metric.volume_form()
-    p = one_form.degree()
-    n = metric.domain().dimension()
-    coeffs = one_form[:]
-    x = coeffs[0] * eps.contract(frame[0], 0)
-    for i in range(1, n):
-        x += coeffs[i] * eps.contract(frame[i], 0)
-    return x#.down(metric)
-
-# D = Min.chart.coframe()[2]; _ans = hodge_dual_one_form(D, Min.chart.frame(), eta)
-# print(_ans.display())
-
 from itertools import product
 
 def eps_oneup(metric, g_inv):
@@ -87,16 +48,57 @@ def hodge_two_form(two_form, epsilon_tensor):
     z = epsilon_tensor.contract(0, 1, two_form, 0, 1) / 2
     return z
 
+# Minkowski space = Min
+dd = Min.chart.coframe()
+d0 = dd[0] # abbreviation
+d1 = dd[1]
+d2 = dd[2]
+d3 = dd[3]
+pp = Min.chart.frame()
+p0 = pp[0]
 metric, g_inv = eta, eta
-# y = eps_oneup(metric, g_inv)
-# print(hodge_one_form(d0, y) == - d1.wedge(d2).wedge(d3))
-# print(hodge_one_form(d1, y) == - d0.wedge(d2).wedge(d3))
-# print(hodge_one_form(d2, y) == - d0.wedge(d3).wedge(d1))
-# print(hodge_one_form(d3, y) == - d0.wedge(d1).wedge(d2))
+y = eps_oneup(metric, g_inv)
+result_one_form = {
+    0: hodge_one_form(d0, y) == - d1.wedge(d2).wedge(d3),
+    1: hodge_one_form(d1, y) == - d0.wedge(d2).wedge(d3),
+    2: hodge_one_form(d2, y) == - d0.wedge(d3).wedge(d1),
+    3: hodge_one_form(d3, y) == - d0.wedge(d1).wedge(d2)
+    }
+if all(result_one_form.values()):
+    print("The results of the hodge star of one (1) forms are all true")
+
 y2 = eps_twoup(metric, g_inv)
-print(hodge_two_form(dd[0].wedge(dd[1]), y2) == - (d2).wedge(d3))
-print(hodge_two_form(dd[0].wedge(dd[2]), y2) == - (d3).wedge(d1))
-print(hodge_two_form(dd[0].wedge(dd[3]), y2) == - (d1).wedge(d2))
-print(hodge_two_form(dd[1].wedge(dd[2]), y2) == (d0).wedge(d3))
-print(hodge_two_form(dd[2].wedge(dd[3]), y2) == (d0).wedge(d1))
-print(hodge_two_form(dd[3].wedge(dd[1]), y2) == (d0).wedge(d2))
+result_two_form = {
+    (0, 1): hodge_two_form(dd[0].wedge(dd[1]), y2) == - (d2).wedge(d3),
+    (0, 2): hodge_two_form(dd[0].wedge(dd[2]), y2) == - (d3).wedge(d1),
+    (0, 3): hodge_two_form(dd[0].wedge(dd[3]), y2) == - (d1).wedge(d2),
+    (1, 2): hodge_two_form(dd[1].wedge(dd[2]), y2) == (d0).wedge(d3),
+    (2, 3): hodge_two_form(dd[2].wedge(dd[3]), y2) == (d0).wedge(d1),
+    (3, 1): hodge_two_form(dd[3].wedge(dd[1]), y2) == (d0).wedge(d2),
+}
+if all(result_two_form.values()):
+    print("The results of the hodge star of two (2) forms are all true")
+
+# mistaken program
+# a1 = d0.hodge_dual(eta, minus_eigenvalues_convention=True)
+# a2 = d0.hodge_dual(eta)
+# a3 = d1.hodge_dual(eta)
+# print(a1.display())
+# print(a2.display())
+# print(a3.display())
+
+# def hodge_dual_one_form(one_form, frame, metric):
+#     eps = metric.volume_form()
+#     p = one_form.degree()
+#     n = metric.domain().dimension()
+#     coeffs = one_form[:]
+#     x = coeffs[0] * eps.contract(0, frame[0], 0)
+#     for i in range(1, n):
+#         x += coeffs[i] * eps.contract(0, frame[i], 0)
+#     return x#.down(metric)
+
+# _ans = hodge_dual_one_form(dd[0], pp, eta); print(_ans.display()) # false
+# _ans = hodge_dual_one_form(dd[1], pp, eta); print(_ans.display())
+# _ans = hodge_dual_one_form(dd[2], pp, eta); print(_ans.display())
+# _ans = hodge_dual_one_form(dd[3], pp, eta); print(_ans.display())
+
