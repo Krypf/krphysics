@@ -254,6 +254,9 @@ def compute_structure_tensor(basis, chart, f_sym):
 # end commutator algebra
 
 def second_fundamental_form_definition(gamma, normal_form, i, j):
+    N = len(normal_form)
+    if N != len(gamma):
+        exit(1)
     return sum(gamma[alpha][i][j] * normal_form[alpha] for alpha in range(N))
 
 def second_fundamental_form(gamma, normal_form, function = second_fundamental_form_definition):
