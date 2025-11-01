@@ -127,11 +127,7 @@ class Spacetime():
 
 class Minkowski(Spacetime):
     var('c')
-    def __init__(self, manifold,
-        args_name = 'x',
-        neighborhood_name = 'U',
-        eta00 = -1
-        ):
+    def __init__(self, manifold, args_name = 'x', neighborhood_name = 'U', eta00 = -1):
         # Define the manifold
         super().__init__(manifold)
         self.args_name = ' '.join([f'{args_name}{i}' for i in range(self.dimension)])
@@ -175,18 +171,9 @@ class Minkowski(Spacetime):
         exc[3,1] = function('D31')(*x) # D[2-1] # dz∧dx
         return exc     
 
-n = 3
+n = 4
 M = Manifold(n, 'Minkowski', structure='Lorentzian')
 Min = Minkowski(M)
-F = Min.electromagnetic()
 eta = Min.metric_tensor()
-F_star = F.hodge_dual(eta, minus_eigenvalues_convention=True)
-# print(F_star.display())
-exc = Min.excitation()
-# L_density = - F.wedge(F_star)
-L_density = - F.wedge(exc)
-print(L_density.display())
-# not good: print(F.hodge_dual(eta).display())
 N = Manifold(3, 'de Sitter', ambient=M)
 # class EuclidSpace(Spacetime):
-# F.hodge_dual(eta).hodge_dual(eta).display()
