@@ -122,7 +122,7 @@ class Spacetime():
         R = scalar_curvature(Ric, metric)
         show(R.display())
         t1 = time.time(); print(f"compute_curvatures in {t1 - t0} seconds");
-
+        
         return Riem, Ric, R
 
 class Minkowski(Spacetime):
@@ -171,9 +171,11 @@ class Minkowski(Spacetime):
         exc[3,1] = function('D31')(*x) # D[2-1] # dz∧dx
         return exc     
 
-n = 4
-M = Manifold(n, 'Minkowski', structure='Lorentzian')
-Min = Minkowski(M)
-eta = Min.metric_tensor()
-N = Manifold(3, 'de Sitter', ambient=M)
+def main():
+    n = 4
+    Min4 = Manifold(n, 'Minkowski', structure='Lorentzian')
+    Min = Minkowski(Min4)
+    eta = Min.metric_tensor()
+    dS3 = Manifold(3, 'de Sitter', ambient=Min4)
+    return Min, eta, dS3
 # class EuclidSpace(Spacetime):

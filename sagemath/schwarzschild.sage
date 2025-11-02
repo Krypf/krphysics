@@ -94,7 +94,7 @@ def set_const():
     spacetime = Schwarzschild(M)
     return spacetime
 
-def main():
+def compute_curvatures():
     t0 = time.time()
     spacetime = set_const()
     U = spacetime.global_domain()
@@ -107,20 +107,21 @@ def main():
     # gamma = all_upper_coefficients(eta, c, g_inv = "eta", domain = spacetime.neighborhood)
 
     Riem, Ric, R = spacetime.compute_curvatures(frame, eta, C, g_inv = eta, domain=U)
+    t1 = time.time(); print(f"compute_curvatures in {t1 - t0} seconds");
+    return Riem, Ric, R
+
+
 
 spacetime = set_const()
-# main()
-x = spacetime.spherical_chart()
-U = spacetime.global_domain()
-surface = U.scalar_field(x[1]) # r = const.
-partials = spacetime.coordinate_frame()
-frame = spacetime.compute_orthonormal_frame(partials=partials)
-N = spacetime.dimension
-normal_form = [frame[mu](surface) for mu in range(N)]
-eta = spacetime.sign_matrix
-C = spacetime.compute_structure_coefficients(frame)
-gamma = all_upper_coefficients(eta, C, g_inv = eta, domain = U)
-K = second_fundamental_form(gamma, normal_form)
+# mode = "orthonormal"
+mode = "coordinate"
+K = compute_second_fundamental(spacetime, mode) # r = 3 R_S / 2
+g = spacetime.metric_tensor()
+_ans = print_second_fundamental_form(spacetime, mode, K)
+
+# x = spacetime.spherical_chart()
+# U = spacetime.global_domain()
+# surface = U.scalar_field(x[1]) # r = const.
 
 # Riemann_curvature = g_S.riemann()
 # show_commutators(frame)
@@ -129,3 +130,4 @@ K = second_fundamental_form(gamma, normal_form)
 # pairing_forms_vectors(forms, frame)
 # show_first_christoffel_symbols(metric, frame)
 # show_structure_coefficients(frame, forms)
+# main()
