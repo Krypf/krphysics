@@ -2,9 +2,9 @@ load("spacetime.sage")
 from itertools import product
 
 def eps_oneup(metric, g_inv):
-    M = metric.domain()
-    n = M.dimension()
-    eps_above = M.tensor_field(1, 3, name='ε^i_j1j2j3')
+    U = metric.domain()
+    n = U.dimension()
+    eps_above = U.tensor_field(1, 3, name='ε^i_j1j2j3')
     eps = metric.volume_form()
     for k in range(n):
         for i, j1, j2, j3 in product(range(n), repeat=4):
@@ -31,10 +31,10 @@ def eps_twoup(metric, g_inv):
     OUTPUT:
         eps_above : (2,2)-type tensor ε^{i1 i2}{}_{j1 j2}
     """
-    M = metric.domain()
-    n = M.dimension()
+    U = metric.domain()
+    n = U.dimension()
     eps_cov = metric.volume_form()   # ε_{i1 i2 i3 i4}
-    eps_above = M.tensor_field(2, 2, name='ε^i1i2_j1j2')
+    eps_above = U.tensor_field(2, 2, name='ε^i1i2_j1j2')
 
     for i1, i2, j1, j2 in product(range(n), repeat=4):
         s = 0
