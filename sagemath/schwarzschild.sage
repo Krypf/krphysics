@@ -119,7 +119,9 @@ mode = "coordinate"
 K = compute_second_fundamental(spacetime, mode) # r = 3 R_S / 2
 g = spacetime.metric_tensor()
 _ans = print_second_fundamental_form(spacetime, mode, K)
-print(time.time() - t0,'seconds');# t0 = time.time()
+
+print(time.time() - t0,'seconds')
+
 # x = spacetime.spherical_chart()
 # U = spacetime.global_domain()
 # surface = U.scalar_field(x[1]) # r = const.
