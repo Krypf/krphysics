@@ -1,6 +1,7 @@
 # Parent class Spacetime defined
 # Subclasses are Sphere, Schwarzschild
 load("~/krphysics/sagemath/geometry.sage")
+from itertools import product
 
 class Spacetime():
     def __init__(self, manifold):
@@ -125,6 +126,39 @@ class Spacetime():
         
         return Riem, Ric, R
 
+    def elemag_tensor11_FH_components(self, F, H, a, b):
+        n = self.dimension
+        g = self.metric_tensor()
+        rhs = 0
+        # 4. obtain the Levi-Civita symbol
+        eps_down = g.volume_form()
+        # indices -> type (4, 0) with metric g
+        eps_up = eps_down.up(g)
+
+        # b == β, a == α, m == μ, r == ρ, s == σ 
+        # use loop indices
+        for m, r, s in product(range(n), repeat=3):
+            if r < s:
+                term1 = H[a, m] * F[r, s]
+                term2 = F[a, m] * H[r, s]
+                # 5. equation (B.5.40)
+                rhs += eps_up[b, m, r, s] * (term1 - term2)
+        rhs = (1/2) * rhs # 1/4から変更
+        return rhs
+
+    def elemag_tensor11_FH(self, F, H):
+        n = 4
+        # 結果として得られる (1, 1)型テンソル kT を定義
+        kT = self.manifold.tensor_field(1, 1, 'kT')
+        # kT のコンポーネント (kT)^b_a に右辺を代入
+        for a, b in product(range(n), repeat=2):
+            kT[b, a] = self.elemag_tensor11_FH_components(F, H, a, b)
+        # 6. 結果の確認
+        # kT の定義を表示
+        print("--- kT の定義 ---")
+        return kT
+
+
 class Minkowski(Spacetime):
     var('c')
     def __init__(self, manifold, args_name = 'x', neighborhood_name = 'U', eta00 = -1):
@@ -140,7 +174,7 @@ class Minkowski(Spacetime):
     def metric_tensor(self):
         _frame = self.chart.frame()
         n = self.dimension
-        eta = M.metric('eta', signature=(n-1, 1, 0))
+        eta = self.manifold.metric('eta', signature=(n-1, 1, 0))
         for i in range(n):
             eta[_frame, i, i] = self.sign_matrix[i, i]
         return eta
