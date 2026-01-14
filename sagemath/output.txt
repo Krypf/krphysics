@@ -1,0 +1,27 @@
+sage: load("sagemath/spherical_metric.sage")
+g.display g_U = -e^(2*mu(r)) dt⊗dt + e^(-2*mu(r)) dr⊗dr + r^2 dtheta⊗dtheta + r^2*sin(theta)^2 dphi⊗dphi
+g.ricci Ric(g_U) = (2*r*e^(4*mu(r))*(d(mu)/dr)^2 + r*e^(4*mu(r))*d^2(mu)/dr^2 + 2*e^(4*mu(r))*d(mu)/dr)/r dt⊗dt - (2*r*(d(mu)/dr)^2 + r*d^2(mu)/dr^2 + 2*d(mu)/dr)/r dr⊗dr + (-2*r*e^(2*mu(r))*d(mu)/dr - e^(2*mu(r)) + 1) dtheta⊗dtheta - (2*r*e^(2*mu(r))*d(mu)/dr + e^(2*mu(r)) - 1)*sin(theta)^2 dphi⊗dphi
+g.ricci_scalar r(g_U): U → ℝ
+   (t, r, theta, phi) ↦ -2*(2*r^2*e^(2*mu(r))*(d(mu)/dr)^2 + r^2*e^(2*mu(r))*d^2(mu)/dr^2 + 4*r*e^(2*mu(r))*d(mu)/dr + e^(2*mu(r)) - 1)/r^2
+\frac{2 \, r e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial\,\mu}{\partial r} + e^{\left(2 \, \mu\left(r\right)\right)} - 1}{r^{2}}
+\frac{2 \, r e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial\,\mu}{\partial r} + e^{\left(2 \, \mu\left(r\right)\right)} - 1}{r^{2}}
+\frac{2 \, r e^{\left(2 \, \mu\left(r\right)\right)} \left(\frac{\partial\,\mu}{\partial r}\right)^{2} + r e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial^2\,\mu}{\partial r ^ 2} + 2 \, e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial\,\mu}{\partial r}}{r}
+\frac{2 \, r e^{\left(2 \, \mu\left(r\right)\right)} \left(\frac{\partial\,\mu}{\partial r}\right)^{2} + r e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial^2\,\mu}{\partial r ^ 2} + 2 \, e^{\left(2 \, \mu\left(r\right)\right)} \frac{\partial\,\mu}{\partial r}}{r}
+F.display() -Er(t, r, theta, phi)/c dt∧dr
+H.display() -r^2*Er(t, r, theta, phi)*epsilon(t, r, theta, phi)*sin(theta) dtheta∧dphi
+--- kT の定義 ---
+
+--- (kT)^0_0 の具体的な式 ---
+0 0
+1/2*Er(t, r, theta, phi)^2*epsilon(t, r, theta, phi)/c
+\frac{{\rm Er}\left(t, r, \theta, \phi\right)^{2} \epsilon\left(t, r, \theta, \phi\right)}{2 \, c}
+1 1
+1/2*Er(t, r, theta, phi)^2*epsilon(t, r, theta, phi)/c
+\frac{{\rm Er}\left(t, r, \theta, \phi\right)^{2} \epsilon\left(t, r, \theta, \phi\right)}{2 \, c}
+2 2
+-1/2*Er(t, r, theta, phi)^2*epsilon(t, r, theta, phi)/c
+-\frac{{\rm Er}\left(t, r, \theta, \phi\right)^{2} \epsilon\left(t, r, \theta, \phi\right)}{2 \, c}
+3 3
+-1/2*Er(t, r, theta, phi)^2*epsilon(t, r, theta, phi)/c
+-\frac{{\rm Er}\left(t, r, \theta, \phi\right)^{2} \epsilon\left(t, r, \theta, \phi\right)}{2 \, c}
+sage: 
