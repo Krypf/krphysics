@@ -96,8 +96,8 @@ class SphericalMetric(Spacetime):
             # with the minus sign
         # D = [function('E1')(*x), function('E2')(*x), function('E3')(*x)]
         exc[1,2] = 0 # function('D12')(*x) # D[3-1] # dx∧dy
-        # exc[2,3] = x[1]^2 * sin(x[2]) * g_inv[0, 0] * g_inv[1, 1] * function('epsilon')(*x) * function('Er')(*x)  # function('Er')(*x) # function('D23')(*x) # D[1-1] # dy∧dz
-        ee = var("epsilon"); exc[2,3] = x[1]^2 * sin(x[2]) * g_inv[0, 0] * g_inv[1, 1] * ee * x[1] * function('Er')(*x)  
+        exc[2,3] = x[1]^2 * sin(x[2]) * g_inv[0, 0] * g_inv[1, 1] * function('epsilon')(*x) * function('Er')(*x)  # function('Er')(*x) # function('D23')(*x) # D[1-1] # dy∧dz
+        # ee = var("epsilon"); exc[2,3] = x[1]^2 * sin(x[2]) * g_inv[0, 0] * g_inv[1, 1] * ee * x[1] * function('Er')(*x)  
         exc[3,1] = 0 # function('Er')(*x) # function('D31')(*x) # D[2-1] # dz∧dx
         return exc
 
