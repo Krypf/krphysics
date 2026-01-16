@@ -110,17 +110,18 @@ def compute_curvatures():
     t1 = time.time(); print(f"compute_curvatures in {t1 - t0} seconds");
     return Riem, Ric, R
 
-import time
-t0 = time.time()
+def main():
+    import time
+    t0 = time.time()
 
-spacetime = set_const()
-# mode = "orthonormal"
-mode = "coordinate"
-K = compute_second_fundamental(spacetime, mode) # r = 3 R_S / 2
-g = spacetime.metric_tensor()
-_ans = print_second_fundamental_form(spacetime, mode, K)
+    spacetime = set_const()
+    # mode = "orthonormal"
+    mode = "coordinate"
+    K = compute_second_fundamental(spacetime, mode) # r = 3 R_S / 2
+    g = spacetime.metric_tensor()
+    _ans = print_second_fundamental_form(spacetime, mode, K)
 
-print(time.time() - t0,'seconds')
+    print(time.time() - t0,'seconds')
 
 # x = spacetime.spherical_chart()
 # U = spacetime.global_domain()

@@ -158,6 +158,26 @@ class Spacetime():
         print("--- kT の定義 ---")
         return kT
 
+    def einstein11type(self):
+        g = self.metric_tensor()
+        R = g.ricci_scalar()
+        Ric = g.ricci()
+        print("g.display", g.display())
+        print("g.ricci", Ric.display())
+        print("g.ricci_scalar", R.display())
+
+        # Set components in the coordinate frame e_X
+        einstein_tensor = Ric.up(g, 1).copy() # M.tensor_field(1, 1, name='G', latex_name='G')
+        for i, j in product(range(_dim), repeat=2): 
+            einstein_tensor[i, j] -= kronecker_delta(i, j) * R / 2 # minus sign
+
+        # Display the components (will show 1 on diagonals)
+        # einstein_tensor.display()
+        for i, j in product(range(_dim), repeat=2): 
+            if einstein_tensor[i, j] != 0:
+                print(latex(einstein_tensor[i, j]))
+        return einstein_tensor
+
 
 class Minkowski(Spacetime):
     var('c')

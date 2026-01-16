@@ -1,51 +1,123 @@
-# 1. Initialize the Manifold
-# We use 4 dimensions. 'M' is the manifold name.
-M = Manifold(4, 'M', structure='Lorentzian')
+###########################################################
+#  VaidyaMetric.sage
+#  Class for the Vaidya spacetime (outgoing radiation)
+#  Written in a modular style similar to SphericalMetric
+###########################################################
 
-# 2. Define Coordinates
-# u: retarded time, r: radial distance
-# th (theta) and ph (phi): angular coordinates
-X.<u,r,th,ph> = M.chart(r'u r:(0,oo) th:(0,pi):\theta ph:(0,2*pi):\phi')
+load("~/krphysics/sagemath/spacetime.sage")
 
-# 3. Define the Mass Function m(u)
-# We define 'm' as an abstract function of 'u'
-m = function('m')(u)
+class VaidyaMetric(Spacetime):
+    def __init__(self, manifold, args_name='u r th ph', neighborhood_name='U'):
+        # Step 1: Initialize the spacetime
+        super().__init__(manifold)
+        self.args_name = args_name
+        self.args = var(args_name)  # (u, r, th, ph)
+        self.neighborhood = manifold.open_subset(neighborhood_name)
+        self.chart = self.neighborhood.chart(r'u r:(0,oo) th:(0,pi):\theta ph:(0,2*pi):\phi')
 
-# 4. Define the Metric Tensor g
-g = M.metric()
+        # Step 2: Define symbolic mass function m(u)
+        self.u = self.args[0]
+        self.r = self.args[1]
+        self.th = self.args[2]
+        self.ph = self.args[3]
+        self.m = function('m')(self.u)
 
-# The metric components:
-# g_uu = -(1 - 2m(u)/r)
-g[0,0] = -(1 - 2*m/r)
+        # Step 3: Define the Lorentzian metric
+        self.g = self.neighborhood.metric('g')
+        self._set_metric_components()
 
-# g_ur = -1 (and g_ru = -1 due to symmetry)
-# Note: For INGOING Vaidya (v), this would be +1. For OUTGOING (u), it is -1.
-g[0,1] = -1 
+    def _set_metric_components(self, null = +1):
+        u, r, th = self.u, self.r, self.th
 
-# g_thth = r^2
-g[2,2] = r^2
+        g = self.g
+        m = self.m
 
-# g_phph = r^2 * sin(theta)^2
-g[3,3] = r^2 * sin(th)^2
+        # Metric components for ingoing Vaidya metric
+        g[0,0] = -(1 - 2*m/r)    # g_uu
+        g[0,1] = null            # g_ur = null
+        g[2,2] = r^2             # g_thth
+        g[3,3] = r^2 * sin(th)^2 # g_phph
 
-# 5. Compute Curvature Tensors
-print("Computing Ricci Tensor...")
-Ric = g.ricci()
-R_scalar = g.ricci_scalar().display() # 0 
+    def metric_tensor(self):
+        return self.g
 
-print("Computing Einstein Tensor...")
-# G = g.einstein()
+    def mass_function(self):
+        return self.m
 
-# 6. Display the Results
-print("\n--- Metric g ---")
-g.display()
+    def compute_curvature(self):
+        Ric = self.g.ricci()
+        R_scalar = self.g.ricci_scalar()
+        return Ric, R_scalar
 
-print("\n--- Einstein Tensor G (Non-zero components) ---")
-# The Vaidya metric is a solution to Einstein's equations for a Null Fluid.
-# We expect only the G_uu component to be non-zero.
-# G.display_comp(only_nonredundant=True)
+    def display_metric(self):
+        print("\n--- Metric g ---")
+        print(self.g.display())
 
-print("\n--- Calculation of G_uu ---")
-# Let's extract the u,u component specifically to see the relation to mass loss
-# Val_Guu = G[0,0]
-# show(Val_Guu)
+    def display_einstein_tensor(self):
+        print("\n--- Einstein Tensor G (Non-zero components) ---")
+        G = self.g.einstein()
+        G.display_comp(only_nonredundant=True)
+        return G
+    
+    def extract_Guu(self):
+        G = self.g.einstein()
+        Guu = G[0,0]
+        print("\n--- G_uu Component ---")
+        show(Guu)
+        return Guu
+
+_dim = 4
+M = Manifold(_dim, 'M', structure='Lorentzian')
+v = spacetime = VaidyaMetric(M)
+
+g = v.metric_tensor()
+Ric, R = v.compute_curvature()
+G = v.einstein11type()
+mode = "coordinate"
+
+def compute_second_fundamental(spacetime, mode):
+    x = spacetime.chart
+    U = spacetime.neighborhood
+    surface = U.scalar_field(x[1] - 3 * spacetime.m) # U.scalar_field(x[1]) # r = const.
+    partials = spacetime.chart.frame()
+    _dim = spacetime.dimension
+    if mode == "orthonormal":
+        frame = spacetime.compute_orthonormal_frame(partials=partials)
+        normal_form = [frame[mu](surface) for mu in range(_dim)]
+        eta = spacetime.sign_matrix
+        C = spacetime.compute_structure_coefficients(frame)
+        gamma = all_upper_coefficients(eta, C, g_inv = eta, domain = U)
+    if mode == "coordinate": 
+        g = spacetime.metric_tensor()
+        gamma = g.christoffel_symbols()
+        gamma = gamma[:]
+        frame = partials
+        normal_form = [frame[mu](surface) for mu in range(_dim)]
+    K = second_fundamental_form(gamma, normal_form)
+    return K
+
+def print_second_fundamental_form(spacetime, mode, K):
+    g = spacetime.metric_tensor()
+    print(g.display())
+    _dim = spacetime.dimension
+    _ans = [[0 for i in range(_dim)] for j in range(_dim)]
+    for i in range(_dim): 
+        for j in range(_dim): 
+            if K[i][j] != 0:
+                print(i, j)
+                print("second_fundamental_form K:")
+                print(K[i][j].display())
+                # if mode == "orthonormal":
+                #     _ans[i][j] = K[i][j] / K[3][3]
+                #     print("K_[3][3] is set to be one", _ans[i][j].display())
+                    
+                if mode == "coordinate": 
+                    _ans[i][j] = K[i][j] / g[i, j]
+                    print("K[i][j] / g[i, j] = ", _ans[i][j].display())
+                    print("metric g:")
+                    print(g[i, j].display())
+                    print(latex(_ans[i][j].display()))
+    return _ans
+
+K = compute_second_fundamental(spacetime, mode)
+_ans = print_second_fundamental_form(spacetime, mode, K)
