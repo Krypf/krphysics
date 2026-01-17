@@ -53,27 +53,10 @@ class VaidyaMetric(Spacetime):
         print("\n--- Metric g ---")
         print(self.g.display())
 
-    def display_einstein_tensor(self):
-        print("\n--- Einstein Tensor G (Non-zero components) ---")
-        G = self.g.einstein()
-        G.display_comp(only_nonredundant=True)
-        return G
-    
-    def extract_Guu(self):
-        G = self.g.einstein()
-        Guu = G[0,0]
-        print("\n--- G_uu Component ---")
-        show(Guu)
-        return Guu
-
-_dim = 4
-M = Manifold(_dim, 'M', structure='Lorentzian')
-v = spacetime = VaidyaMetric(M)
-
-g = v.metric_tensor()
-Ric, R = v.compute_curvature()
-G = v.einstein11type()
-mode = "coordinate"
+    def delta(self):
+        g = self.g
+        Delta = g[0,0] * g[1,1] - g[0,1]^2
+        return Delta
 
 def compute_second_fundamental(spacetime, mode):
     x = spacetime.chart
@@ -119,5 +102,14 @@ def print_second_fundamental_form(spacetime, mode, K):
                     print(latex(_ans[i][j].display()))
     return _ans
 
-K = compute_second_fundamental(spacetime, mode)
-_ans = print_second_fundamental_form(spacetime, mode, K)
+_dim = 4
+M = Manifold(_dim, 'M', structure='Lorentzian')
+v = spacetime = VaidyaMetric(M)
+
+g = v.metric_tensor()
+Ric, R = v.compute_curvature()
+G = v.einstein11type()
+mode = "coordinate"
+
+# K = compute_second_fundamental(spacetime, mode)
+# _ans = print_second_fundamental_form(spacetime, mode, K)
