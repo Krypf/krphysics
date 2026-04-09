@@ -54,7 +54,7 @@ class VaidyaMetric(Spacetime):
         print(self.g.display())
 
     def delta(self):
-        g = self.g
+        g = self.g # assuming self.g is a Sage matrix or symbolic matrix
         Delta = g[0,0] * g[1,1] - g[0,1]^2
         return Delta
 
