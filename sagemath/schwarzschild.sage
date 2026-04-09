@@ -134,4 +134,4 @@ def main():
 # pairing_forms_vectors(forms, frame)
 # show_first_christoffel_symbols(metric, frame)
 # show_structure_coefficients(frame, forms)
-# main()
+main()

@@ -232,4 +232,3 @@ def main():
     eta = Min.metric_tensor()
     dS3 = Manifold(3, 'de Sitter', ambient=Min4)
     return Min, eta, dS3
-# class EuclidSpace(Spacetime):
