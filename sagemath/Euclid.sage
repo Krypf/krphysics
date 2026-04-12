@@ -55,21 +55,59 @@ class EuclidSpace(Spacetime):
             delta[_frame, i, i] = self.sign_matrix[i, i]
         return delta
 
-def main():
-    n = 3
-    # Define a 3D manifold for Euclidean space
-    Euc3_manifold = Manifold(n, 'Euclidean3', structure='Riemannian')
-    Euc3 = EuclidSpace(Euc3_manifold)
-    delta = Euc3.metric_tensor()
-    # show(delta.display(Euc3.spherical_chart()))
-    
-    # Now you can use existing methods like:
-    # Euc3.compute_orthonormal_frame(chart=Euc3.chart, _show=True)
-    x = Euc3.cartesian_chart()
-    show(x)
-    show(x.frame())
-    phi = Euc3.set_transition_map()
-    show(phi)
-    return delta
+    def E_hat(self):
+    # Construct the matrix
+        E = matrix([
+            [1, 0,                      0],
+            [0,      self.r,  0],
+            [0,      0,                      self.r * sin(self.th)],
+        ])
+        return E
 
-main()
+    def E_inv(self):
+        # Construct the matrix
+        E = matrix([
+            [1, 0,                            0],
+            [0,          1 / (self.r),  0],
+            [0,          0,                            1 / (self.r * sin(self.th))],
+        ])
+        return E
+        
+    def diffeomorphisms(self):
+        # Define the diffeomorphisms for Cartesian and Spherical charts
+        C_cartesian = self.cartesian_chart()
+        C_spherical = self.spherical_chart()
+        
+        # Transition map from Spherical to Cartesian
+        transition_map = self.set_transition_map()
+        
+        return C_cartesian, C_spherical, transition_map
+
+    def get_killing_vectors(self):
+        X, S, phi = self.diffeomorphisms()
+        x, y, z = X
+        e_x, e_y, e_z = X.frame()
+        # better written explicitly:
+        Lz = x*e_y - y*e_x
+        Lx = y*e_z - z*e_y
+        Ly = z*e_x - x*e_z
+        show(Lx.display(S))
+        show(Ly.display(S))
+        show(Lz.display(S))
+        return Lx, Ly, Lz
+
+def initialization(n = 3):
+    # Define a 3D manifold for Euclidean space
+    Eucdim = Manifold(n, 'Euclidean3', structure='Riemannian')
+    Euc = EuclidSpace(Eucdim)
+    
+    return Euc
+
+Euc = initialization()
+Lx, Ly, Lz = Euc.get_killing_vectors()
+# Now you can use existing methods like:
+S = Euc.spherical_chart()
+orthonormal_frame = Euc.compute_orthonormal_frame(chart=S, _show=False)
+
+# delta = Euc.metric_tensor()
+# main()

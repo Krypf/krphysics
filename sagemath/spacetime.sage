@@ -41,7 +41,7 @@ class Spacetime():
             orthonormal_frame.append(vec)
             
             if _show:
-                show(vec.display())
+                show(vec.display(chart))
         return orthonormal_frame
 
     def compute_orthonormal_tetrads(self, chart = None, domain = None, _show = False, name=None):
