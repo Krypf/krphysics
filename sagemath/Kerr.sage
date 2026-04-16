@@ -40,9 +40,7 @@ class Kerr(Spacetime):
     def global_domain(self):
         U = self.spherical_chart().domain() # Open subset U of the 4-dimensional Lorentzian manifold
         return U
-
-    # Metric components
-    def metric_tensor(self):
+    def components(self):
         # Extract coordinates
         r = self.args[1]
         theta = self.args[2]
@@ -50,6 +48,11 @@ class Kerr(Spacetime):
         # Extract parameters (assuming self.Mass and self.a are defined in __init__)
         M = self.Mass
         a = self.a
+        return r, theta, M, a
+
+    # Metric components
+    def metric_tensor(self):
+        r, theta, M, a = self.components()
         
         # Define Kerr metric functions
         Sigma = r^2 + a^2 * cos(theta)^2
@@ -103,7 +106,26 @@ def compute_curvatures():
 # main()
 K = set_const()
 g = K.metric_tensor()
+g_inv = g.inverse()
 print(g.display())
 partials = K.coordinate_frame()
-g.ricci().display() # zero
+# g.ricci().display() # zero
 # g.riemann().display() # too heavy to show in the terminal.
+
+# Assuming 'U' is the global domain and 'r', 'a', 'Delta' are defined
+U = K.global_domain()
+r, theta, M, a = K.components()
+Sigma = r^2 + a^2 * cos(theta)^2
+Delta = r^2 - 2 * M * r + a^2
+
+# Define the null vectors l and n in the coordinate basis
+l = U.vector_field([r^2 + a^2, -Delta, 0, a], frame=partials, name='l')
+n = U.vector_field([r^2 + a^2, Delta, 0, a], frame=partials, name='n')
+# g(l,l) == 0 # True
+# g(n,n) == 0 # True
+ln_sym = (l * n + n * l) / 2
+K_tensor = (1 / (Delta)) * ln_sym # + r^2 * g_inv
+p_t, p_r, p_th, p_ph = var('p_t p_r p_th p_ph')
+p_form = U.diff_form(1, 'p'); p_form.set_comp(partials)[:] = [p_t, p_r, p_th, p_ph]
+# carter_constant = K_tensor.contract(0, p_form, 0).contract(0, p_form, 0)
+# print(simplify(carter_constant).display()) # too complicated to show in the terminal.
