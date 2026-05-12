@@ -84,15 +84,18 @@ function topology_test()
     println("Is this a valid topology? ", is_topology(top))
 
     p = powerset(collect(X))
+    num = 0
     for t in powerset(collect(p))
         t = parse_to_set_of_sets(t)
         top = Topology(X, t)
         if is_topology((top))
             println(t)
+            num += 1
         else
             continue
         end
     end
+    println("Number of valid topologies: ", num)
 end
 
 if abspath(PROGRAM_FILE) == abspath(@__FILE__)
