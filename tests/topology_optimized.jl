@@ -228,43 +228,51 @@ end
 # Main demo
 # ---------------------------------------------------------------------------
 
+function sub(n::Int)
+    print("\nn = $n ... ")
+    flush(stdout)
+
+    perms = [collect(Int, p) .+ 1 for p in permutations(0:n-1)]
+
+    t_full = @elapsed topologies = enumerate_topologies(n)
+    count_full = length(topologies)
+
+    t_canon = @elapsed canonical = enumerate_topologies(n; canonical_only=true)
+    count_canon = length(canonical)
+
+    # Verify orbit sizes recover the full count
+    orbit_sum = sum(orbit_size(c, n, ) for c in canonical)
+
+    # Use precomputed perms for orbit_size
+    orbit_sum2 = sum(orbit_size(c, perms) for c in canonical)
+
+    println("done")
+    println("  Total topologies          : $count_full   ($(round(t_full,  digits=4)) s)")
+    println("  Canonical representatives : $count_canon   ($(round(t_canon, digits=4)) s)")
+    println("  Orbit size check          : orbit_sum = $orbit_sum2  $(orbit_sum2 == count_full ? "✓" : "✗ MISMATCH")")
+
+    if n <= 3
+        println("  All topologies on {0,...,$(n-1)}:")
+        for (i, top) in enumerate(topologies)
+            print("    [$i] ")
+            print_topology(collect(top), n)
+        end
+    end
+end
 function main()
     println("=" ^ 60)
     println("Topology enumeration  (DFS + closure pruning + symmetry)")
     println("=" ^ 60)
 
-    for n in 1:5
-        print("\nn = $n ... ")
-        flush(stdout)
-
-        perms = [collect(Int, p) .+ 1 for p in permutations(0:n-1)]
-
-        t_full = @elapsed topologies = enumerate_topologies(n)
-        count_full = length(topologies)
-
-        t_canon = @elapsed canonical = enumerate_topologies(n; canonical_only=true)
-        count_canon = length(canonical)
-
-        # Verify orbit sizes recover the full count
-        orbit_sum = sum(orbit_size(c, n, ) for c in canonical)
-
-        # Use precomputed perms for orbit_size
-        orbit_sum2 = sum(orbit_size(c, perms) for c in canonical)
-
-        println("done")
-        println("  Total topologies          : $count_full   ($(round(t_full,  digits=4)) s)")
-        println("  Canonical representatives : $count_canon   ($(round(t_canon, digits=4)) s)")
-        println("  Orbit size check          : orbit_sum = $orbit_sum2  $(orbit_sum2 == count_full ? "✓" : "✗ MISMATCH")")
-
-        if n <= 3
-            println("  All topologies on {0,...,$(n-1)}:")
-            for (i, top) in enumerate(topologies)
-                print("    [$i] ")
-                print_topology(collect(top), n)
-            end
-        end
+    for n in 1:6
+        sub(n)
     end
 end
+"""
+The known results for the number of topologies on n-point sets are (OEIS A000798):
+https://oeis.org/A000798
+1, 1, 4, 29, 355, 6942, 209527, 9535241, 642779354, 63260289423, 8977053873043, 1816846038736192, 519355571065774021, 207881393656668953041, 115617051977054267807460, 88736269118586244492485121, 93411113411710039565210494095, 134137950093337880672321868725846, 261492535743634374805066126901117203
+"""
 
 # helper overload so orbit_size works with just (coll_set, n)
 function orbit_size(coll_set::Set{UInt32}, n::Int)::Int
