@@ -1,0 +1,15 @@
+{
+    "classes": [
+        {
+            "class_index": 1,
+            "orbit_size": 1,
+            "topology": [
+                [],
+                [0]
+            ]
+        }
+    ],
+    "isomorphism_classes": 1,
+    "n": 1,
+    "total_topologies": 1
+}

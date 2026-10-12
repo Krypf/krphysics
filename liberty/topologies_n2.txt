@@ -1,0 +1,10 @@
+Topology Isomorphism Classification for n = 2
+Total enumerated: 4, Classes: 3
+============================================================
+
+[1] Orbit size: 1
+    𝒪_1 = { ∅, {0}, {1}, {0, 1} }
+[2] Orbit size: 2
+    𝒪_2 = { ∅, {0}, {0, 1} }
+[3] Orbit size: 1
+    𝒪_3 = { ∅, {0, 1} }

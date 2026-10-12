@@ -1,0 +1,101 @@
+{
+    "classes": [
+        {
+            "class_index": 1,
+            "orbit_size": 6,
+            "topology": [
+                [],
+                [0],
+                [0,1],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 2,
+            "orbit_size": 1,
+            "topology": [
+                [],
+                [0],
+                [1],
+                [0,1],
+                [2],
+                [0,2],
+                [1,2],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 3,
+            "orbit_size": 3,
+            "topology": [
+                [],
+                [0],
+                [1,2],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 4,
+            "orbit_size": 3,
+            "topology": [
+                [],
+                [0],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 5,
+            "orbit_size": 1,
+            "topology": [
+                [],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 6,
+            "orbit_size": 3,
+            "topology": [
+                [],
+                [0,1],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 7,
+            "orbit_size": 3,
+            "topology": [
+                [],
+                [0],
+                [1],
+                [0,1],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 8,
+            "orbit_size": 6,
+            "topology": [
+                [],
+                [0],
+                [1],
+                [0,1],
+                [0,2],
+                [0,1,2]
+            ]
+        },
+        {
+            "class_index": 9,
+            "orbit_size": 3,
+            "topology": [
+                [],
+                [0],
+                [0,1],
+                [0,2],
+                [0,1,2]
+            ]
+        }
+    ],
+    "isomorphism_classes": 9,
+    "n": 3,
+    "total_topologies": 29
+}

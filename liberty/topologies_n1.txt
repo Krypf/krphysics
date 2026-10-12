@@ -1,0 +1,6 @@
+Topology Isomorphism Classification for n = 1
+Total enumerated: 1, Classes: 1
+============================================================
+
+[1] Orbit size: 1
+    𝒪_1 = { ∅, {0} }
